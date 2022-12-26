@@ -1,0 +1,10 @@
+Package: N6mAshuffle
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Author: Joseph Chieh-Yu Lai
+Maintainer: Joseph Chieh-Yu Lai <joe5621624@gmail.com>
+Description: This tool could be used in 
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
