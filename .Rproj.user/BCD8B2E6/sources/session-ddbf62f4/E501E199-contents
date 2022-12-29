@@ -94,7 +94,10 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 #' @param txdb Element A as txdb format used for X annotation
 #' @param tag tag before the names of column of output data
 #' @param name ID of factor X used for annotation
-#' @param
+#' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
+#' @param verbose if TRUE, output the detail of processing
+#'
+#' @export
 ExtractCorrelate <- function(data, txdb=txdb, tag=NULL, name="name", strand=NULL, verbose=TRUE){
 
   if (is.null(tag)){ tag <- "Region" }
@@ -131,6 +134,16 @@ ExtractCorrelate <- function(data, txdb=txdb, tag=NULL, name="name", strand=NULL
 
 }
 
+#' Annotate the  distance of factor X to nearest element A.
+#'
+#' Extract the correlated information from factor X to txdb object made by element A.
+#'
+#' @param data Factor X as bed format file, data.frame or grange.
+#' @param region Element A as bed format file, data.frame or grange. used for X annotation
+#' @param tag tag before the names of column of output data
+#' @param data.name ID of factor X used for annotation
+#' @param region.name ID of element A used for annotation
+#' @param verbose if TRUE, output the detail of processing
 RegionAnnoFromData <- function(
     data, region=region, tag=FALSE, data.name="name", region.name="name", verbose=TRUE){
   library(data.table); library(dplyr); library(ChIPseeker)

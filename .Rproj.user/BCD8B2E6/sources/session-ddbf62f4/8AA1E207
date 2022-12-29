@@ -1,27 +1,27 @@
 {
-    "id": "E501E199",
-    "path": "~/N6mAshuffle/R/InputDATA.R",
-    "project_path": "R/InputDATA.R",
+    "id": "8AA1E207",
+    "path": "~/N6mAshuffle/R/Parse.R",
+    "project_path": "R/Parse.R",
     "type": "r_source",
     "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1672031095886.0,
+    "created": 1672034989181.0,
     "source_on_save": false,
-    "relative_order": 3,
+    "relative_order": 6,
     "properties": {
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "146,0",
-        "scrollLine": "139"
+        "cursorPosition": "166,3",
+        "scrollLine": "148"
     },
     "folds": "",
-    "lastKnownWriteTime": 1672034976,
+    "lastKnownWriteTime": 1672304613,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1672034976543,
+    "last_content_update": 1672304613511,
     "read_only": false,
     "read_only_alternatives": []
 }
