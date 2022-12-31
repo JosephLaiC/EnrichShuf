@@ -96,9 +96,13 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 #' @param name ID of factor X used for annotation
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #' @param verbose if TRUE, output the detail of processing
+#' @param strand.INFO if TRUE, means the name of txdb contained strand information ("/+" and "/-")
 #'
 #' @export
-ExtractCorrelate <- function(data, txdb=txdb, tag=NULL, name="name", strand=NULL, verbose=TRUE){
+ExtractCorrelate <- function(
+    data, txdb=txdb, tag=NULL, name="name", strand=NULL, verbose=TRUE, strand.INFO=FALSE){
+
+  library(data.table)
 
   if (is.null(tag)){ tag <- "Region" }
 
@@ -130,6 +134,38 @@ ExtractCorrelate <- function(data, txdb=txdb, tag=NULL, name="name", strand=NULL
 
   TABLE           <- TABLE[,c(name, EXTRACT.NAME)]
   colnames(TABLE) <- FINAL.NAME
+
+  if (isTRUE(strand.INFO)){
+
+    PLUS.IDX  <- str_split_fixed(TABLE[,2], "/", 2)[,2]%in%"+" %>% which()
+    MINUS.IDX <- str_split_fixed(TABLE[,2], "/", 2)[,2]%in%"-" %>% which()
+
+
+    if (length(PLUS.IDX)+length(MINUS.IDX)==nrow(TABLE)){
+
+      TABLE[,2] <- str_split_fixed(TABLE[,2], "/", 2)[,1]
+      TABLE[MINUS.IDX,4]    <- TABLE[MINUS.IDX,4]*-1
+
+      TABLE[TABLE[,4] ==0,3] <- "overlay"
+      TABLE[TABLE[,4] < 0,3] <- "upstream"
+      TABLE[TABLE[,4] > 0,3] <- "downstream"
+
+    } else {
+
+      stop("Check the information of column2 of region: function ExtractCorrelate")
+
+    }
+
+
+  } else {
+
+    TABLE[TABLE[,4]==0,3] <- "overlay"
+    TABLE[TABLE[,4]!=0,3] <- "no_overlay"
+
+  }
+
+  TABLE[,4] <- abs(TABLE[,4])
+
   return(TABLE)
 
 }
@@ -144,52 +180,30 @@ ExtractCorrelate <- function(data, txdb=txdb, tag=NULL, name="name", strand=NULL
 #' @param data.name ID of factor X used for annotation
 #' @param region.name ID of element A used for annotation
 #' @param verbose if TRUE, output the detail of processing
+#'
+#' @export
 RegionAnnoFromData <- function(
     data, region=region, tag=FALSE, data.name="name", region.name="name", verbose=TRUE){
   library(data.table); library(dplyr); library(ChIPseeker)
 
-  ## Import the tadb
-  TXDB.plus  <- txdbfromBed(region, name=region.name, strand="+")
-  TXDB.minus <- txdbfromBed(region, name=region.name, strand="-")
+  bed.plus   <- bedfromfile(region, name=region.name, strand="+") %>% data.frame()
+  bed.minus  <- bedfromfile(region, name=region.name, strand="-") %>% data.frame()
 
-  grange <- bedfromfile(data, name=data.name, strand=NULL)
+  bed.plus$width  <- NULL
+  bed.plus$name   <- paste(bed.plus$name,  "+",  sep="/")
+  bed.minus$width <- NULL
+  bed.minus$name  <- paste(bed.minus$name, "-",  sep="/")
 
-  TABLE.plus  <- ExtractCorrelate(grange, txdb=TXDB.plus,  tag="plus",  name=data.name, verbose=verbose)
-  TABLE.minus <- ExtractCorrelate(grange, txdb=TXDB.minus, tag="minus", name=data.name, verbose=verbose)
-  TABLE.all   <- merge(TABLE.plus, TABLE.minus, by=data.name)
+  txdb <- makeGRangesFromDataFrame(
+    rbind(bed.plus, bed.minus), keep.extra.columns=TRUE,
+    starts.in.df.are.0based=FALSE, strand.field="strand") %>% txdbfromBed()
 
-  ### Table process ###
-  OVERLAP     <- subset(TABLE.all, TABLE.all[,"plus_dist"]==0 | TABLE.all[,"minus_dist"]==0) %>%
-    { .[,1:2] } %>%
-    mutate(region=.[,2], type="overlay",    dist=0)
-  OVERLAP[,2] <- NULL
+  TABLE <- bedfromfile(data, name=data.name, strand=NULL) %>%
+    ExtractCorrelate(txdb=txdb, tag=tag, name=data.name, verbose=verbose, strand.INFO=TRUE)
 
-  PLUS        <- subset(TABLE.all, abs(TABLE.all[,"plus_dist"]) <  abs(TABLE.all[,"minus_dist"])) %>%
-    { .[,1:4] } %>%
-    mutate(region=.[,2], type="no_overlay", dist=.[,4])
-  PLUS[,2:4]  <- NULL
-
-  MINUS       <- subset(TABLE.all, abs(TABLE.all[,"plus_dist"]) >  abs(TABLE.all[,"minus_dist"])) %>%
-    { .[,c(1,5:7)] } %>%
-    mutate(region=.[,2], type="no_overlay", dist=-.[,4])
-  MINUS[,2:4] <- NULL
-
-  EQUAL       <- subset(TABLE.all, abs(TABLE.all[,"plus_dist"]) == abs(TABLE.all[,"minus_dist"]) & abs(TABLE.all[,"plus_dist"]) > 0 & abs(TABLE.all[,"minus_dist"]) > 0) %>%
-    { .[,1:4] } %>%
-    mutate(region=.[,2], type="no_overlay", dist=.[,4])
-  EQUAL[,2:4] <- NULL
-
-  RESULT      <- rbind(OVERLAP, PLUS, MINUS, EQUAL)
-  ### Table process ###
-
-  if (is.character(tag)){
-    names <- paste(tag, colnames(RESULT)[2:4], sep = "_")
-  } else {
-    names <- colnames(RESULT)[2:4]
-  }
-
-  colnames(RESULT)[2:4] <- names
-
-  return(RESULT)
+  return(TABLE)
 
 }
+
+
+

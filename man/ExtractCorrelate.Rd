@@ -10,7 +10,8 @@ ExtractCorrelate(
   tag = NULL,
   name = "name",
   strand = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  strand.INFO = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ ExtractCorrelate(
 \item{strand}{if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"}
 
 \item{verbose}{if TRUE, output the detail of processing}
+
+\item{strand.INFO}{if TRUE, means the name of txdb contained strand information ("/+" and "/-")}
 }
 \description{
 Extract the correlated information from factor X to txdb object made by element A.
