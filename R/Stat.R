@@ -61,7 +61,18 @@ NormDistribute <- function(data){
 #' @param observe Information of observed peaks
 #' @param expect Information of expect peak sets list.
 #' @param stat.type Statistic method. \cr
-#' norm: Applied p.norm to calculate the
+#' \cr
+#' norm: Apply p.norm to calculate the significance \cr
+#' \cr
+#' ecdf : Apply ecdf function to calculate probability of upeer or lower. \cr
+#' \cr
+#' both : Both apply norm and ecdf.
+#' @param tail Could assign as upper, lower or both.
+#' @param plotINFO.save If assign as TRUE, will save the essential information to do some plot.
+#' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
+#' @param parallel If TRUE, will apply bapply to run the process.
+#'
+#' @export
 compileStat <- function(
     observe=observe, expect=expect, stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE, parallel=FALSE){
 
@@ -165,7 +176,9 @@ compileStat <- function(
 
 }
 
-
+#' TEMP
+#'
+#' @export
 ObsExpCompare <- function(
     dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
@@ -198,7 +211,9 @@ ObsExpCompare <- function(
 
     }
 
-
+#' TEMP
+#'
+#' @export
 ObsExpCompareByBin <- function(
     dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue",

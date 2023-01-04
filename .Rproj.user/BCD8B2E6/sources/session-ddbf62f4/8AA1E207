@@ -1,9 +1,9 @@
 {
     "id": "8AA1E207",
-    "path": "~/N6mAshuffle/R/Parse.R",
+    "path": "C:/Users/user/Documents/N6mAshuffle/R/Parse.R",
     "project_path": "R/Parse.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "511802010",
     "contents": "",
     "dirty": false,
     "created": 1672034989181.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "162,1",
-        "scrollLine": "137"
+        "cursorPosition": "179,69",
+        "scrollLine": "156"
     },
     "folds": "",
-    "lastKnownWriteTime": 1672304613,
+    "lastKnownWriteTime": 1672814748,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1672304613511,
+    "last_content_update": 1672814748911,
     "read_only": false,
     "read_only_alternatives": []
 }
