@@ -60,7 +60,8 @@ NormDistribute <- function(data){
 #'
 #' @param observe Information of observed peaks
 #' @param expect Information of expect peak sets list.
-#' @param stat.type
+#' @param stat.type Statistic method. \cr
+#' norm: Applied p.norm to calculate the
 compileStat <- function(
     observe=observe, expect=expect, stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE, parallel=FALSE){
 
