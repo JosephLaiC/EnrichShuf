@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stat.R
 \name{ObsExpCompareByBin}
 \alias{ObsExpCompareByBin}
-\title{TEMP}
+\title{Define the observe and expect annotation info to do the statistic by each bin.}
 \usage{
 ObsExpCompareByBin(
   dir = NULL,
@@ -24,6 +24,51 @@ ObsExpCompareByBin(
   log.p = TRUE
 )
 }
+\arguments{
+\item{dir}{Directory contained observe and expect info files.}
+
+\item{observe}{PATH to observe info.}
+
+\item{expect.dir}{Directory contained expect info files.}
+
+\item{parallel}{If TRUE, will apply bapply to run the process.}
+
+\item{shuffle.n}{Times of shuffle.}
+
+\item{shuffle.prefix}{Prefix name of shuffle info.}
+
+\item{observe.prefix}{Prefix name of observe info.}
+
+\item{file.ext}{Extension name of all files.}
+
+\item{intersect}{If TRUE, result will contained intersect number.}
+
+\item{bin}{Interval size of each window.}
+
+\item{min}{Minimum number of conditions}
+
+\item{max}{Maximum number of conditions}
+
+\item{stat.type}{Statistic method. \cr
+\cr
+norm: Apply p.norm to calculate the significance \cr
+\cr
+ecdf : Apply ecdf function to calculate probability of upeer or lower. \cr
+\cr
+both : Both apply norm and ecdf.}
+
+\item{tail}{Could assign as upper, lower or both.}
+
+\item{plotINFO.save}{If assign as TRUE, will save the essential information to do some plot.}
+
+\item{log.p}{If TRUE, will log2 the p.value (Only could apply on p.norm).}
+
+\item{type}{Could be specify: \cr
+\cr
+"continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+\cr
+"within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
+}
 \description{
-TEMP
+Define the observe and expect annotation info to do the statistic by each bin.
 }

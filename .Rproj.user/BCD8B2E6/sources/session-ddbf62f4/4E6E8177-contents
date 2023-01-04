@@ -176,7 +176,28 @@ compileStat <- function(
 
 }
 
-#' TEMP
+#' Define the observe and expect annotation info to do the statistic.
+#'
+#' @param dir Directory contained observe and expect info files.
+#' @param observe PATH to observe info.
+#' @param expect.dir Directory contained expect info files.
+#' @param parallel If TRUE, will apply bapply to run the process.
+#' @param shuffle.n Times of shuffle.
+#' @param shuffle.prefix Prefix name of shuffle info.
+#' @param observe.prefix Prefix name of observe info.
+#' @param file.ext Extension name of all files.
+#' @param intersect If TRUE, result will contained intersect number.
+#' @param condition Range of distance to nearest factor. Two number saperate by "-".
+#' @param stat.type  Statistic method. \cr
+#' \cr
+#' norm: Apply p.norm to calculate the significance \cr
+#' \cr
+#' ecdf : Apply ecdf function to calculate probability of upeer or lower. \cr
+#' \cr
+#' both : Both apply norm and ecdf.
+#' @param tail Could assign as upper, lower or both.
+#' @param plotINFO.save If assign as TRUE, will save the essential information to do some plot.
+#' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
 #'
 #' @export
 ObsExpCompare <- function(
@@ -211,7 +232,35 @@ ObsExpCompare <- function(
 
     }
 
-#' TEMP
+#' Define the observe and expect annotation info to do the statistic by each bin.
+#'
+#' @param dir Directory contained observe and expect info files.
+#' @param observe PATH to observe info.
+#' @param expect.dir Directory contained expect info files.
+#' @param parallel If TRUE, will apply bapply to run the process.
+#' @param shuffle.n Times of shuffle.
+#' @param shuffle.prefix Prefix name of shuffle info.
+#' @param observe.prefix Prefix name of observe info.
+#' @param file.ext Extension name of all files.
+#' @param intersect If TRUE, result will contained intersect number.
+#' @param bin Interval size of each window.
+#' @param min Minimum number of conditions
+#' @param max Maximum number of conditions
+#' @param type Could be specify: \cr
+#' \cr
+#' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+#' \cr
+#' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
+#' @param stat.type  Statistic method. \cr
+#' \cr
+#' norm: Apply p.norm to calculate the significance \cr
+#' \cr
+#' ecdf : Apply ecdf function to calculate probability of upeer or lower. \cr
+#' \cr
+#' both : Both apply norm and ecdf.
+#' @param tail Could assign as upper, lower or both.
+#' @param plotINFO.save If assign as TRUE, will save the essential information to do some plot.
+#' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
 #'
 #' @export
 ObsExpCompareByBin <- function(
