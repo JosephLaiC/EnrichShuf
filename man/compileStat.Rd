@@ -20,7 +20,20 @@ compileStat(
 \item{expect}{Information of expect peak sets list.}
 
 \item{stat.type}{Statistic method. \cr
-norm: Applied p.norm to calculate the}
+\cr
+norm: Apply p.norm to calculate the significance \cr
+\cr
+ecdf : Apply ecdf function to calculate probability of upeer or lower. \cr
+\cr
+both : Both apply norm and ecdf.}
+
+\item{tail}{Could assign as upper, lower or both.}
+
+\item{plotINFO.save}{If assign as TRUE, will save the essential information to do some plot.}
+
+\item{log.p}{If TRUE, will log2 the p.value (Only could apply on p.norm).}
+
+\item{parallel}{If TRUE, will apply bapply to run the process.}
 }
 \description{
 Use expected peak set result to build the empirical model and compare observe number to model to calculate the significance.
