@@ -188,7 +188,7 @@ ObsExpCompare <- function(
 
       observe.res <- CountCorrelation(observe, intersect=intersect, condition=condition)
       expect.res  <- compileCorrelation(
-        expect.dir, parallel=parallel, shuffle.n=shuffle.n, shuffle.prefix=shuffle.prefix, observe.prefix=observe.prefix,
+        expect.dir, parallel=parallel, shuffle.n=shuffle.n, shuffle.prefix=shuffle.prefix,
         file.ext=file.ext, intersect=intersect, condition=condition)
 
       result <- compileStat(
