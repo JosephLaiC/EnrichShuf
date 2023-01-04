@@ -143,8 +143,8 @@ ExtractCorrelate <- function(
 
     if (length(PLUS.IDX)+length(MINUS.IDX)==nrow(TABLE)){
 
-      TABLE[,2] <- str_split_fixed(TABLE[,2], "/", 2)[,1]
-      TABLE[MINUS.IDX,4]    <- TABLE[MINUS.IDX,4]*-1
+      TABLE[         ,2] <- str_split_fixed(TABLE[,2], "/", 2)[,1]
+      TABLE[MINUS.IDX,4] <- TABLE[MINUS.IDX,4]*-1
 
       TABLE[TABLE[,4] ==0,3] <- "overlay"
       TABLE[TABLE[,4] < 0,3] <- "upstream"
