@@ -12,7 +12,7 @@ CountCorrelation <- function(
     data, intersect=TRUE,
     condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
 
-  library(readr); library(stringr)
+  #library(readr); library(stringr)
 
   if (is.data.frame(data)){
     data <- data
@@ -73,7 +73,7 @@ compileCorrelation <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
 
-  library(dplyr)
+  #library(dplyr)
 
   file.list <- paste0(shuffle.prefix, rep(1:shuffle.n), file.ext)
 
