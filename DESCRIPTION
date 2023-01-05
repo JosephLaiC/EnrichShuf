@@ -11,8 +11,9 @@ LazyData: true
 RoxygenNote: 7.2.3
 Imports:
   GenomicFeatures,
+  BiocParallel,
+  ChIPseeker,
   dplyr,
   data.table,
-  ChIPseeker,
   readr,
   stringr
