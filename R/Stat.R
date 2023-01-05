@@ -204,33 +204,36 @@ ObsExpCompare <- function(
     dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
     stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE){
-      library(dplyr)
+    
+  #library(dplyr)
 
-      if (!is.null(dir)){
-        observe    <- file.path(dir, paste0(observe.prefix, file.ext))
-        expect.dir <- dir
-        message(
+      
+  if (!is.null(dir)){
+        
+    observe    <- file.path(dir, paste0(observe.prefix, file.ext))    
+    expect.dir <- dir        
+    message(
           "dir is not null, suppose observe=", observe,
           ", shuffle n =", shuffle.n, ", under ", dir)
       } else {
-
-        if (any(is.null(observe), is.null(expect.dir))){
-          stop("Please assign observe file and expect.dir or specify dir output by EnrichShuf.sh")
-        }
-
-      }
-
-      observe.res <- CountCorrelation(observe, intersect=intersect, condition=condition)
-      expect.res  <- compileCorrelation(
-        expect.dir, parallel=parallel, shuffle.n=shuffle.n, shuffle.prefix=shuffle.prefix,
-        file.ext=file.ext, intersect=intersect, condition=condition)
-
-      result <- compileStat(
-        observe=observe.res, expect=expect.res, stat.type=stat.type, tail=tail, plotINFO.save=plotINFO.save, log.p=log.p)
-
-      return(result)
-
+    
+    if (any(is.null(observe), is.null(expect.dir))){
+      stop("Please assign observe file and expect.dir or specify dir output by EnrichShuf.sh")
     }
+
+  }
+
+  observe.res <- CountCorrelation(observe, intersect=intersect, condition=condition)
+  expect.res  <- compileCorrelation(
+     expect.dir, parallel=parallel, shuffle.n=shuffle.n, shuffle.prefix=shuffle.prefix,
+     file.ext=file.ext, intersect=intersect, condition=condition)
+
+   result <- compileStat(
+     observe=observe.res, expect=expect.res, stat.type=stat.type, tail=tail, plotINFO.save=plotINFO.save, log.p=log.p)
+
+   return(result)
+
+}
 
 #' Define the observe and expect annotation info to do the statistic by each bin.
 #'
