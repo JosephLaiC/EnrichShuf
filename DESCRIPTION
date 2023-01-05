@@ -13,6 +13,7 @@ Imports:
   GenomicFeatures,
   BiocParallel,
   ChIPseeker,
+  BiocManager,
   dplyr,
   data.table,
   readr,
