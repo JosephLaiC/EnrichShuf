@@ -9,3 +9,10 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+Imports:
+  GenomicFeatures,
+  dplyr,
+  data.table,
+  ChIPseeker,
+  readr,
+  stringr
