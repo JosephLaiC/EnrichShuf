@@ -7,7 +7,7 @@
 #' @export
 bedfromfile <- function(data, name="name", strand=NULL){
 
-  library(GenomicFeatures)
+  #library(GenomicFeatures)
 
   column.names <- c("chr", "start", "end", name)
 
@@ -63,7 +63,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
 #'
 #' @export
 txdbfromBed <- function(data, name="name", strand=NULL){
-  library(dplyr)
+  #library(dplyr)
 
   if (class(data)[[1]]=="GRanges"){
 
@@ -102,7 +102,7 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 ExtractCorrelate <- function(
     data, txdb=txdb, tag=NULL, name="name", strand=NULL, verbose=TRUE, strand.INFO=FALSE){
 
-  library(data.table)
+  #library(data.table)
 
   if (is.null(tag)){ tag <- "Region" }
 
@@ -184,7 +184,7 @@ ExtractCorrelate <- function(
 #' @export
 RegionAnnoFromData <- function(
     data, region=region, tag=FALSE, data.name="name", region.name="name", verbose=TRUE){
-  library(data.table); library(dplyr); library(ChIPseeker)
+  #library(data.table); library(dplyr); library(ChIPseeker)
 
   bed.plus   <- bedfromfile(region, name=region.name, strand="+") %>% data.frame()
   bed.minus  <- bedfromfile(region, name=region.name, strand="-") %>% data.frame()
