@@ -15,8 +15,7 @@ Imports:
   data.table,
   readr,
   stringr
-biocViews:
-  GenomicFeatures,
-  BiocParallel,
-  ChIPseeker
+  biocViews:GenomicFeatures,
+  biocViews:BiocParallel,
+  biocViews:ChIPseeker
   
