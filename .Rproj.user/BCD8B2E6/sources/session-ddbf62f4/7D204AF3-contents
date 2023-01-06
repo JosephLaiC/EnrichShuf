@@ -68,7 +68,6 @@ CountCorrelation <- function(
 #' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
 #'
-#' @import dplyr
 #'
 #' @export
 compileCorrelation <- function(

@@ -1,27 +1,26 @@
 {
-    "id": "7D204AF3",
-    "path": "~/N6mAshuffle/R/Parse.R",
-    "project_path": "R/Parse.R",
+    "id": "C45927F6",
+    "path": "~/N6mAshuffle/R/Stat.R",
+    "project_path": "R/Stat.R",
     "type": "r_source",
     "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1672913677708.0,
+    "created": 1672990379377.0,
     "source_on_save": false,
-    "relative_order": 3,
+    "relative_order": 5,
     "properties": {
-        "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "86,19",
-        "scrollLine": "49"
+        "cursorPosition": "267,10",
+        "scrollLine": "236"
     },
     "folds": "",
-    "lastKnownWriteTime": 1672990374,
+    "lastKnownWriteTime": 1672990498,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1672990374260,
+    "last_content_update": 1672990498192,
     "read_only": false,
     "read_only_alternatives": []
 }

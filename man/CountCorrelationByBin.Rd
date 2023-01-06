@@ -26,7 +26,9 @@ name (1st column); $tag_region (2nd column); $tag_type (3rd column); $tag_dist (
 \item{max}{Maximum number of conditions}
 
 \item{type}{Could be specify one of: \cr
+\cr
 "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+\cr
 "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
 }
 \description{

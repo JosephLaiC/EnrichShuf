@@ -4,7 +4,6 @@
 #' @param name assign the fourth column name and keep it exsist in grange
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#'
 #' @export
 bedfromfile <- function(data, name="name", strand=NULL){
 
@@ -62,8 +61,6 @@ bedfromfile <- function(data, name="name", strand=NULL){
 #' @param name assign the fourth column name and keep it exsist in grange
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @import dplyr
-#'
 #' @export
 txdbfromBed <- function(data, name="name", strand=NULL){
   #library(dplyr)
@@ -84,7 +81,7 @@ txdbfromBed <- function(data, name="name", strand=NULL){
   grange$transcript_id <- data.frame(grange)[,name]
   grange$gene_id       <- data.frame(grange)[,name]
 
-  txdb <- makeTxDbFromGRanges(grange)
+  txdb <- GenomicFeatures::makeTxDbFromGRanges(grange)
   return(txdb)
 
 }
@@ -101,8 +98,6 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 #' @param verbose if TRUE, output the detail of processing
 #' @param strand.INFO if TRUE, means the name of txdb contained strand information ("/+" and "/-")
 #'
-#' @import data.table
-#' @import dplyr
 #'
 #' @export
 ExtractCorrelate <- function(
