@@ -37,7 +37,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
     colnames(table) <- column.names
   }
 
-  grange <- GenomicFeatures::makeGRangesFromDataFrame(
+  grange <- GenomicRanges::makeGRangesFromDataFrame(
     table, keep.extra.columns=TRUE, starts.in.df.are.0based=TRUE)
 
   if (any(isTRUE(strand), is.null(strand))){
@@ -195,7 +195,7 @@ RegionAnnoFromData <- function(
   bed.minus$width <- NULL
   bed.minus$name  <- paste(bed.minus$name, "-",  sep="/")
 
-  txdb <- GenomicFeatures::makeGRangesFromDataFrame(
+  txdb <- GenomicRanges::makeGRangesFromDataFrame(
     rbind(bed.plus, bed.minus), keep.extra.columns=TRUE,
     starts.in.df.are.0based=FALSE, strand.field="strand") %>% txdbfromBed()
 
