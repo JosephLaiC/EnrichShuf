@@ -46,7 +46,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
 
   } else if (strand%in%c("+", "-")){
 
-    strand(grange) <- strand
+    GenomicRanges::strand(grange) <- strand
     return(grange)
 
   } else {
