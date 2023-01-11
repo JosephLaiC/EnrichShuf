@@ -8,7 +8,7 @@ compileCorrelation(
   dir,
   parallel = FALSE,
   shuffle.n = 10000,
-  shuffle.prefix = "shuffle",
+  shuffle.prefix = "shuffle_",
   file.ext = ".txt.gz",
   intersect = TRUE,
   condition = c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")
