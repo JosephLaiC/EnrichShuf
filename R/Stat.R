@@ -229,7 +229,8 @@ ObsExpCompare <- function(
      file.ext=file.ext, intersect=intersect, condition=condition)
 
    result <- compileStat(
-     observe=observe.res, expect=expect.res, stat.type=stat.type, tail=tail, plotINFO.save=plotINFO.save, log.p=log.p)
+     observe=observe.res, expect=expect.res, stat.type=stat.type, tail=tail, 
+     plotINFO.save=plotINFO.save, log.p=log.p, parallel=parallel)
 
    return(result)
 
