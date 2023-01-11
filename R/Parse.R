@@ -157,6 +157,8 @@ BinsDefine <- function(bin=NULL, min=NULL, max=NULL, type=NULL){
 #' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
 #' \cr
 #' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
+#'
+#' @export
 CountCorrelationByBin <- function(
     data, intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){
 
@@ -175,6 +177,8 @@ CountCorrelationByBin <- function(
 #' @param file.ext Extension name of peak sets.
 #' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
+#'
+#' @export
 compileCorrelationByBin <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){
