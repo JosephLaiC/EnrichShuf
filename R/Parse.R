@@ -26,7 +26,7 @@ CountCorrelation <- function(
 
   if (isTRUE(intersect)){
     table  <- data.frame(
-      number = nrow(data[data[,4]==0,]),
+      number = length(which(data[,4] == 0)),
       type   = "intersect")
     result <- rbind(result, table)
   }
@@ -46,7 +46,7 @@ CountCorrelation <- function(
       MAX <- max(condition.list)
 
       table  <- data.frame(
-        number = nrow(subset(data, abs(data[,4]) > MIN & abs(data[,4]) <= MAX)),
+        number = length(which(data[,4] > MIN& data[,4] <= MAX)),
         type   = paste(MIN, MAX, sep="_"))
       result <- rbind(result, table)
 
@@ -71,7 +71,7 @@ CountCorrelation <- function(
 #'
 #' @export
 compileCorrelation <- function(
-    dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", file.ext=".txt.gz",
+    dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
 
   #library(dplyr)
