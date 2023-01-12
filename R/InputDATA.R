@@ -14,7 +14,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
   if (is.data.frame(data)){
     table <- data
   } else if (file.exists(data)){
-    table <- readr::read_tsv(data, col_names=FALSE)
+    table <- readr::read_tsv(data, col_names=FALSE, col_types = readr::cols())
   } else {
     stop("Check the input data format or check the file exsist in path")
   }
@@ -205,6 +205,3 @@ RegionAnnoFromData <- function(
   return(TABLE)
 
 }
-
-
-
