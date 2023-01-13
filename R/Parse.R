@@ -180,7 +180,7 @@ CountCorrelationByBin <- function(
 #'
 #' @export
 compileCorrelationByBin <- function(
-    dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", file.ext=".txt.gz",
+    dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)

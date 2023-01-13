@@ -200,7 +200,7 @@ compileStat <- function(
 #'
 #' @export
 ObsExpCompare <- function(
-    dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", observe.prefix="observe", file.ext=".txt.gz",
+    dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
     stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE){
 
@@ -267,7 +267,7 @@ ObsExpCompare <- function(
 #'
 #' @export
 ObsExpCompareByBin <- function(
-    dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle", observe.prefix="observe", file.ext=".txt.gz",
+    dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue",
     stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE){
 
@@ -279,4 +279,3 @@ ObsExpCompareByBin <- function(
 
   return(result)
 }
-
