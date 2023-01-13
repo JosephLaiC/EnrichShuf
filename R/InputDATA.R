@@ -14,7 +14,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
   if (is.data.frame(data)){
     table <- data
   } else if (file.exists(data)){
-    table <- readr::read_tsv(data, col_names=FALSE, col_types = readr::cols())
+    table <- readr::read_tsv(data, col_names=FALSE, show_col_types=FALSE)
   } else {
     stop("Check the input data format or check the file exsist in path")
   }

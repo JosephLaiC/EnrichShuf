@@ -17,7 +17,7 @@ CountCorrelation <- function(
   if (is.data.frame(data)){
     data <- data
   } else if (is.character(data)){
-    data <- data.frame(readr::read_tsv(data, col_types = readr::cols()))
+    data <- data.frame(readr::read_tsv(data, show_col_types=FALSE))
   } else {
     stop("Check the input data format, could be dataframe or file path")
   }
