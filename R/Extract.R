@@ -12,7 +12,7 @@ ExtractStartEnd <- function(grange, strand="*"){
   strand <- GenomicRanges::strand(grange)@values
 
   if (strand=="*"){
-    strand <- "*"
+    strand <- "+"
   }
 
   if (strand=="+"){
@@ -30,7 +30,7 @@ ExtractStartEnd <- function(grange, strand="*"){
       end   = c(GenomicRanges::end(grange),      GenomicRanges::start(grange)))
 
   } else {
-    stop("Strand onlu can specify NULL, TRUE, +, -, strand is ", strand)
+    stop("Strand onlu can specify *, +, -, strand is ", strand)
   }
 
   return(GenomicRanges::makeGRangesFromDataFrame(result))
