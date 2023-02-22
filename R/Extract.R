@@ -3,7 +3,7 @@
 #' @param grange input grange
 #'
 #' @export
-ExtractStartEnd <- function(grange){
+ExtractStartEnd <- function(grange, strand="*"){
 
   if (length(grange)>1){
     stop("Query peak must only contained 1 peak: ExtractStartEnd")
