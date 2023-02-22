@@ -3,7 +3,7 @@
 #' @param grange input grange
 #'
 #' @export
-ExtractStartEnd <- function(grange, strand="*"){
+ExtractStartEnd <- function(grange, strand=NULL){
 
   if (length(grange)>1){
     stop("Query peak must only contained 1 peak: ExtractStartEnd")
@@ -11,7 +11,7 @@ ExtractStartEnd <- function(grange, strand="*"){
 
   strand <- GenomicRanges::strand(grange)@values
 
-  if (strand=="*"){
+  if (is.null(strand)){
     strand <- "+"
   }
 
@@ -47,7 +47,7 @@ ExtractStartEnd <- function(grange, strand="*"){
 #'
 #' @export
 DistCalculate <- function(
-    query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=FALSE, verbose=FALSE){
+    query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=NULL, verbose=FALSE){
 
   if (!nrow(data.frame(query))==1) {
     stop("Query peak must only contained 1 peak")
@@ -147,7 +147,7 @@ DistCalculate <- function(
 #'
 #' @export
 CompilePeak <- function(
-  query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=FALSE){
+  query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=NULL){
 
   # Import query
   if (is.data.frame(query)) {
@@ -171,12 +171,12 @@ CompilePeak <- function(
   # Import subject
   if (is.data.frame(subject)) {
 
-    subject <- bedfromfile(subject, name=name, strand=strand)
+    subject <- bedfromfile(subject, name=name)
 
   } else if (is.character(subject)) {
 
     if (file.exists(subject)) {
-      subject <- bedfromfile(subject, name=name, strand=strand)
+      subject <- bedfromfile(subject, name=name)
     } else {
       stop("Subject file doesn't exist")
     }
