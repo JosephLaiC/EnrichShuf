@@ -19,4 +19,3 @@ Imports:
   GenomicFeatures,
   BiocParallel,
   ChIPseeker
-  

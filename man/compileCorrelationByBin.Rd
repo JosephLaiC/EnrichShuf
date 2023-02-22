@@ -8,7 +8,7 @@ compileCorrelationByBin(
   dir,
   parallel = FALSE,
   shuffle.n = 10000,
-  shuffle.prefix = "shuffle",
+  shuffle.prefix = "shuffle_",
   file.ext = ".txt.gz",
   intersect = TRUE,
   bin = 1000,

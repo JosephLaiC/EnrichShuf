@@ -10,7 +10,7 @@ ObsExpCompare(
   expect.dir = NULL,
   parallel = FALSE,
   shuffle.n = 10000,
-  shuffle.prefix = "shuffle",
+  shuffle.prefix = "shuffle_",
   observe.prefix = "observe",
   file.ext = ".txt.gz",
   intersect = TRUE,
