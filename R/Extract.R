@@ -1,4 +1,4 @@
-#'  Extract start and end position from grange
+#' Extract start and end position from grange
 #' 
 #' @param grange input grange
 #'
