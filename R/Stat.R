@@ -279,3 +279,43 @@ ObsExpCompareByBin <- function(
 
   return(result)
 }
+
+
+## Downstream function is for getting significant enriched peaks
+
+featureCompare <- function(rds, compare.info=compare.info, type=type, dist=1000000) {
+
+  if (!is.character(type)) {
+    stop("The type should be character.")
+  }
+
+  if (!length(type)==1) {
+    stop("The length of rds and number should be the same.")
+  }
+
+  type.list <- c(
+    "binomel", "extact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+
+  if (!type%in%type.list) {
+    stop("The type should be one of ", paste(type.list, collapse=", "))
+  }
+
+  compare.number <- lapply(compare.info, function(x) sum(x<=dist)) %>% unlist()
+  rds.number     <- readRDS(rds) %>% lapply(., function(x) sum(x<=dist)) %>% unlist()
+
+  if (type=="binomel") {
+    pval <- edgeR::binomTest(compare.number, rds.number)
+  } else if (type=="extact_2tail") {
+    pval <- edgeR::exactTestDoubleTail(compare.number, rds.number)
+  } else if (type=="exact_sample_compare") {
+    pval <- edgeR::exactTestBySmallP(compare.number, rds.number)
+  } else if (type=="exact_deviance") {
+    pval <- edgeR::exactTestByDeviance(compare.number, rds.number)
+  } else if (type=="exact_binomel") {
+    pval <- edgeR::exactTestBetaApprox(compare.number, rds.number)
+  }
+
+  log2FC <- log2(Observe.nums+1)-log2(Shuffle.nums+1)
+
+}
+
