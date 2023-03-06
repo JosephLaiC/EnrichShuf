@@ -282,40 +282,317 @@ ObsExpCompareByBin <- function(
 
 
 ## Downstream function is for getting significant enriched peaks
+featureCompare <- function(expect.info, observe.info=observe.info, type=NULL, dist=1000000) {
 
-featureCompare <- function(rds, compare.info=compare.info, type=type, dist=1000000) {
-
-  if (!is.character(type)) {
-    stop("The type should be character.")
+  if (!any(is.character(type), is.null(type))) {
+    stop("The type should be character or null.")
   }
 
-  if (!length(type)==1) {
-    stop("The length of rds and number should be the same.")
+  if (is.character(type)) {
+
+    type.list <- c(
+      "binomel", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+
+    if (!length(type)==1) {
+      stop("The length of rds should be 1.")
+    } else if (!type%in%type.list) {
+      stop("The type should be one of ", paste(type.list, collapse=", "))
+    }
+
   }
 
-  type.list <- c(
-    "binomel", "extact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+  observe <- lapply(observe.info, function(x) sum(x<=dist)) %>% unlist()
+  expect  <- lapply(expect.info , function(x) sum(x<=dist)) %>% unlist()
 
-  if (!type%in%type.list) {
-    stop("The type should be one of ", paste(type.list, collapse=", "))
+  if ("binomel"%in%type) {
+    pval <- edgeR::binomTest(observe, expect)
+  } else if ("exact_2tail"%in%type) {
+    pval <- edgeR::exactTestDoubleTail(observe, expect)
+  } else if ("exact_sample_compare"%in%type) {
+    pval <- edgeR::exactTestBySmallP(observe, expect)
+  } else if ("exact_deviance"%in%type) {
+    pval <- edgeR::exactTestByDeviance(observe, expect)
+  } else if ("exact_binomel"%in%type) {
+    pval <- edgeR::exactTestBetaApprox(observe, expect)
   }
 
-  compare.number <- lapply(compare.info, function(x) sum(x<=dist)) %>% unlist()
-  rds.number     <- readRDS(rds) %>% lapply(., function(x) sum(x<=dist)) %>% unlist()
-
-  if (type=="binomel") {
-    pval <- edgeR::binomTest(compare.number, rds.number)
-  } else if (type=="extact_2tail") {
-    pval <- edgeR::exactTestDoubleTail(compare.number, rds.number)
-  } else if (type=="exact_sample_compare") {
-    pval <- edgeR::exactTestBySmallP(compare.number, rds.number)
-  } else if (type=="exact_deviance") {
-    pval <- edgeR::exactTestByDeviance(compare.number, rds.number)
-  } else if (type=="exact_binomel") {
-    pval <- edgeR::exactTestBetaApprox(compare.number, rds.number)
+  if (is.character(type)) {
+    result <- list(
+      expect  = expect,
+      observe = observe,
+      log2FC  = log2(observe+1)-log2(expect+1),
+      pval    = pval)
+  } else if (is.null(type)) {
+    result <- list(
+      expect  = expect,
+      observe = observe,
+      log2FC  = log2(observe+1)-log2(expect+1))
   }
 
-  log2FC <- log2(Observe.nums+1)-log2(Shuffle.nums+1)
+}
+
+
+featureCompareList <- function(
+  expect.list, observe.info=observe.info, type=NULL, dist=1000000, parallel=FALSE) {
+
+  if (!any(is.character(type), is.null(type))) {
+    stop("The type should be character or null.")
+  }
+
+  if (is.character(type)) {
+
+    type.list <- c(
+      "binomel", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+
+    if (!length(type)==1) {
+      stop("The length of rds should be 1.")
+    } else if (!type%in%type.list) {
+      stop("The type should be one of ", paste(type.list, collapse=", "))
+    }
+
+  }
+
+  observe <- lapply(observe.info, function(x) sum(x<=dist)) %>% unlist()
+
+  if (isTRUE(parallel)) {
+
+    expect <- BiocParallel::bplapply(expect.list, function(x)
+      lapply(x, function(y) sum(y<=dist)) %>% unlist())
+    log2FC <- BiocParallel::bplapply(expect, function(x) log2(observe+1)-log2(x+1))
+
+    if ("binomel"%in%type) {
+      pval <- BiocParallel::bplapply(expect, function(x) edgeR::binomTest(observe, x))
+    } else if ("exact_2tail"%in%type) {
+      pval <- BiocParallel::bplapply(expect, function(x) edgeR::exactTestDoubleTail(observe, x))
+    } else if ("exact_sample_compare"%in%type) {
+      pval <- BiocParallel::bplapply(expect, function(x) edgeR::exactTestBySmallP(observe, x))
+    } else if ("exact_deviance"%in%type) {
+      pval <- BiocParallel::bplapply(expect, function(x) edgeR::exactTestByDeviance(observe, x))
+    } else if ("exact_binomel"%in%type) {
+      pval <- BiocParallel::bplapply(expect, function(x) edgeR::exactTestBetaApprox(observe, x))
+    }
+
+  } else {
+      
+    expect <- lapply(expect.list, function(x)
+      lapply(x, function(y) sum(y<=dist)) %>% unlist())
+    log2FC <- lapply(expect, function(x) log2(observe+1)-log2(x+1))
+
+    if ("binomel"%in%type) {
+      pval <- lapply(expect, function(x) edgeR::binomTest(observe, x))
+    } else if ("exact_2tail"%in%type) {
+      pval <- lapply(expect, function(x) edgeR::exactTestDoubleTail(observe, x))
+    } else if ("exact_sample_compare"%in%type) {
+      pval <- lapply(expect, function(x) edgeR::exactTestBySmallP(observe, x))
+    } else if ("exact_deviance"%in%type) {
+      pval <- lapply(expect, function(x) edgeR::exactTestByDeviance(observe, x))
+    } else if ("exact_binomel"%in%type) {
+      pval <- lapply(expect, function(x) edgeR::exactTestBetaApprox(observe, x))
+    }
+
+  }
+
+  names(expect) <- paste0("Shuffle_", 1:length(expect))
+  names(log2FC) <- paste0("Shuffle_", 1:length(log2FC))
+
+  if (is.character(type)) {
+    result <- list(
+      expect  = expect,
+      observe = observe,
+      log2FC  = log2FC,
+      pval    = pval)
+  } else if (is.null(type)) {
+    result <- list(
+      expect  = expect,
+      observe = observe,
+      log2FC  = log2FC)
+  }
+
+}
+
+
+featureSTAT <- function(data, type=NULL, parallel=FALSE) {
+
+  if (!all(names(data)%in%c("observe", "expect", "log2FC"))) {
+    stop("The data should be a list with observe, expect and log2FC, export by featureCompare or EnrichCompare.")
+  }
+
+  if (is.character(type)) {
+
+    type.list <- c(
+      "binomel", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+
+    if (!all(type%in%type.list)) {
+      stop("The type should be one of ", paste(type.list, collapse=", "))
+    }
+
+  }
+
+  pval <- NULL
+  if (is.list(data[["expect"]])) {
+    
+    if (isTRUE(parallel)) {
+
+      if ("binomel"%in%type) {
+        pval[["binomel"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+          edgeR::binomTest(data[["observe"]], x))
+      } 
+      
+      if ("exact_2tail"%in%type) {
+        pval[["exact_2tail"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+          edgeR::exactTestDoubleTail(data[["observe"]], x))
+      } 
+      
+      if ("exact_sample_compare"%in%type) {
+        pval[["exact_sample_compare"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+          edgeR::exactTestBySmallP(data[["observe"]], x))
+      } 
+      
+      if ("exact_deviance"%in%type) {
+        pval[["exact_deviance"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+          edgeR::exactTestByDeviance(data[["observe"]], x))
+      } 
+      
+      if ("exact_binomel"%in%type) {
+        pval[["exact_deviance"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+          edgeR::exactTestBetaApprox(data[["observe"]], x))
+      }
+
+    } else {
+       
+      if ("binomel"%in%type) {
+        pval[["binomel"]] <- lapply(data[["expect"]], function(x) 
+          edgeR::binomTest(data[["observe"]], x))
+      } 
+      
+      if ("exact_2tail"%in%type) {
+        pval[["exact_2tail"]] <- lapply(data[["expect"]], function(x) 
+          edgeR::exactTestDoubleTail(data[["observe"]], x))
+      } 
+      
+      if ("exact_sample_compare"%in%type) {
+        pval[["exact_sample_compare"]] <- lapply(data[["expect"]], function(x) 
+          edgeR::exactTestBySmallP(data[["observe"]], x))
+      } 
+      
+      if ("exact_deviance"%in%type) {
+        pval[["exact_deviance"]] <- lapply(data[["expect"]], function(x) 
+          edgeR::exactTestByDeviance(data[["observe"]], x))
+      } 
+      
+      if ("exact_binomel"%in%type) {
+        pval[["exact_deviance"]] <- lapply(data[["expect"]], function(x) 
+          edgeR::exactTestBetaApprox(data[["observe"]], x))
+      }
+
+    }
+
+  } else {
+
+    if ("binomel"%in%type) {
+      pval[["binomel"]] <- edgeR::binomTest(data[["observe"]], data[["expect"]])
+    } 
+      
+    if ("exact_2tail"%in%type) {
+      pval[["exact_2tail"]] <- edgeR::exactTestDoubleTail(data[["observe"]], data[["expect"]])
+    } 
+      
+    if ("exact_sample_compare"%in%type) {
+      pval[["exact_sample_compare"]] <- edgeR::exactTestBySmallP(data[["observe"]], data[["expect"]])
+    } 
+      
+    if ("exact_deviance"%in%type) {
+      pval[["exact_deviance"]] <- edgeR::exactTestByDeviance(data[["observe"]], data[["expect"]])
+    } 
+      
+    if ("exact_binomel"%in%type) {
+      pval[["exact_deviance"]] <- edgeR::exactTestBetaApprox(data[["observe"]], data[["expect"]])
+    }
+
+  }
+
+  result <- list(
+    observe = data[["observe"]],
+    expect  = data[["expect"]],
+    log2FC  = data[["log2FC"]],
+    pval    = pval)
+
+  return(result)
+}
+
+
+EnrichCompare <- function(
+  shuffleRDS, observeRDS=observeRDS, type=NULL, dist=1000000, parallel=FALSE) {
+
+  library(dplyr)
+
+  if (is.character(observeRDS)) {
+    
+    if (file.exists(observeRDS)) {
+      observe.info <- readRDS(observeRDS) %>% 
+        { lapply(., function(x) x[x<=dist]) }
+    } else {
+      stop("The observeRDS file is not exists.")
+    }
+
+  } else {
+    stop("The observeRDS should be character.")
+  }
+
+
+  if (is.character(shuffleRDS)) {
+
+    if (length(shuffleRDS)==1) {
+      
+      if (file.exists(shuffleRDS)) {
+        file <- "one"
+        expect.info <- readRDS(shuffleRDS) %>%
+          { lapply(., function(x) x[x<=dist]) }
+      } else {
+        stop("The shuffleRDS file is not exists.")
+      }
+
+    } else {
+
+      lapply(shuffleRDS, function(x) {
+          
+        if (!file.exists(x)) {
+          stop("The shuffleRDS file is not exists.")
+        } 
+          
+      })
+      file <- "multi"
+
+    }
+  } else {
+    stop("The shuffleRDS should be character.")
+  }
+
+  if (file=="one") {
+    
+    result <- featureCompare(expect.info, observe.info=observe.info, type=TYPE, dist=dist)
+    
+  } else if (file=="multi") {
+    
+    if (isTRUE(parallel)) {
+
+      result <- BiocParallel::bplapply(shuffleRDS, function(x) 
+        readRDS(x) %>% { lapply(., function(x) x[x<=dist]) } ) %>%
+        featureCompareList(observe.info=observe.info, type=TYPE, dist=dist, parallel=TRUE)
+
+    } else {
+
+      result <- lapply(shuffleRDS, function(x) 
+        readRDS(x) %>% { lapply(., function(x) x[x<=dist]) } ) %>%
+        featureCompareList(observe.info=observe.info, type=TYPE, dist=dist, parallel=FALSE)
+
+    }
+    
+  } else {
+    stop("The check the input shuffle file.")
+  }
+
+  return(result)
 
 }
 
