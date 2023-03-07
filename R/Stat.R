@@ -408,7 +408,7 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
   if (is.character(type)) {
 
     type.list <- c(
-      "binomel", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomel")
+      "binomial", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomial")
 
     if (!all(type%in%type.list)) {
       stop("The type should be one of ", paste(type.list, collapse=", "))
@@ -421,8 +421,8 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
     
     if (isTRUE(parallel)) {
 
-      if ("binomel"%in%type) {
-        pval[["binomel"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
+      if ("binomial"%in%type) {
+        pval[["binomial"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
           edgeR::binomTest(data[["observe"]], x))
       } 
       
@@ -441,15 +441,15 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
           edgeR::exactTestByDeviance(data[["observe"]], x))
       } 
       
-      if ("exact_binomel"%in%type) {
+      if ("exact_binomial"%in%type) {
         pval[["exact_deviance"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
           edgeR::exactTestBetaApprox(data[["observe"]], x))
       }
 
     } else {
        
-      if ("binomel"%in%type) {
-        pval[["binomel"]] <- lapply(data[["expect"]], function(x) 
+      if ("binomial"%in%type) {
+        pval[["binomial"]] <- lapply(data[["expect"]], function(x) 
           edgeR::binomTest(data[["observe"]], x))
       } 
       
@@ -468,7 +468,7 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
           edgeR::exactTestByDeviance(data[["observe"]], x))
       } 
       
-      if ("exact_binomel"%in%type) {
+      if ("exact_binomial"%in%type) {
         pval[["exact_deviance"]] <- lapply(data[["expect"]], function(x) 
           edgeR::exactTestBetaApprox(data[["observe"]], x))
       }
@@ -477,8 +477,8 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
 
   } else {
 
-    if ("binomel"%in%type) {
-      pval[["binomel"]] <- edgeR::binomTest(data[["observe"]], data[["expect"]])
+    if ("binomial"%in%type) {
+      pval[["binomial"]] <- edgeR::binomTest(data[["observe"]], data[["expect"]])
     } 
       
     if ("exact_2tail"%in%type) {
@@ -493,7 +493,7 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
       pval[["exact_deviance"]] <- edgeR::exactTestByDeviance(data[["observe"]], data[["expect"]])
     } 
       
-    if ("exact_binomel"%in%type) {
+    if ("exact_binomial"%in%type) {
       pval[["exact_deviance"]] <- edgeR::exactTestBetaApprox(data[["observe"]], data[["expect"]])
     }
 
@@ -501,5 +501,56 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
 
   data[["ExactSTAT"]] <- pval
 
+  return(data)
+}
+
+ObsExpBinomTable <- function(data) {
+
+  if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
+    stop("The data should be a list with observe, expect and log2FC, export by featureCompare or EnrichCompare.")
+  }
+
+  if (!is.list(data[["expect"]])) {
+    stop("The expect should be a list, to generate the table, please use ObsExpBinomTableList.")
+  }
+
+  up.res   <- lapply(data[["expect"]], function(x) data[["observe"]] > x) %>% data.frame()
+  down.res <- lapply(data[["expect"]], function(x) data[["observe"]] < x) %>% data.frame()
+
+  colnames(up.res)   <- names(data[["expect"]])
+  colnames(down.res) <- names(data[["expect"]])
+  
+  data$BinomTable <- list(up=up.res, down=down.res)
+  return(data)
+}
+
+ObsExpBinomial <- function(data, n=10) {
+
+  if (!"BinomTable"%in%names(data)) {
+    message("The BinomTable is not found, running ObsExpBinomTable...")
+    data <- ObsExpBinomTable(data)
+  }
+
+  up.res   <- lapply(n, function(x) 
+    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
+      binom.test(y, x, alternative="greater")$p.value))
+  down.res <- lapply(n, function(x)
+    lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
+      binom.test(y, x, alternative="less")$p.value))
+  two.res  <- lapply(n, function(x)
+    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
+      binom.test(y, x, alternative="two.sided")$p.value))
+  list.res <- lapply(n, function(x) colnames(data$BinomTable[[1]])[1:x])
+
+  names(up.res)   <- paste0("Binom_", n)
+  names(down.res) <- paste0("Binom_", n)
+  names(two.res)  <- paste0("Binom_", n)
+  names(list.res) <- paste0("Binom_", n)
+
+  data$Binom_Pval <- list(
+    up       = up.res,
+    down     = down.res,
+    two.tail = two.res,
+    list     = list.res)
   return(data)
 }
