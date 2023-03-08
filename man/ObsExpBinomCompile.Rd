@@ -4,10 +4,12 @@
 \alias{ObsExpBinomCompile}
 \title{Compile the binomial test results.}
 \usage{
-ObsExpBinomCompile(data)
+ObsExpBinomCompile(data, p.adjust = NULL)
 }
 \arguments{
 \item{data}{The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.}
+
+\item{p.adjust}{The p.adjust method, default is NULL.}
 }
 \description{
 Compile the binomial test results.

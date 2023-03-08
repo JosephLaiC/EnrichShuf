@@ -597,9 +597,10 @@ ObsExpBinomial <- function(data, n=10) {
 #' Compile the binomial test results.
 #' 
 #' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
+#' @param p.adjust The p.adjust method, default is NULL.
 #' 
 #' @export
-ObsExpBinomCompile <- function(data) {
+ObsExpBinomCompile <- function(data, p.adjust=NULL) {
 
   if (!"Binom_Pval"%in%names(data)) {
     stop("The Binom_Pval is not found, please run ObsExpBinomial...")
@@ -618,6 +619,14 @@ ObsExpBinomCompile <- function(data) {
       pVal_up       = data$Binom_Pval$up[[i]],
       pVal_down     = data$Binom_Pval$down[[i]],
       pVal_two_tail = data$Binom_Pval$two.tail[[i]])
+  }
+
+  if (!is.null(p.adjust)) {
+    for (i in names(result.list)) {
+      result.list[[i]]$FDR_up       <- p.adjust(result.list[[i]]$pVal_up, method=p.adjust)
+      result.list[[i]]$FDR_down     <- p.adjust(result.list[[i]]$pVal_down, method=p.adjust)
+      result.list[[i]]$FDR_two_tail <- p.adjust(result.list[[i]]$pVal_two_tail, method=p.adjust)
+    }
   }
 
   data$Binom_compile <- result.list
