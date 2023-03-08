@@ -615,9 +615,9 @@ ObsExpBinomCompile <- function(data) {
 
     result.list[[i]] <- data.frame(
       log2FC        = log2(observe+1) - log2(rowMeans(expect.table[,list])+1),
-      pVal_up       = data$up[[i]],
-      pVal_down     = data$down[[i]],
-      pVal_two_tail = data$two.tail[[i]])
+      pVal_up       = data$Binom_Pval$up[[i]],
+      pVal_down     = data$Binom_Pval$down[[i]],
+      pVal_two_tail = data$Binom_Pval$two.tail[[i]])
   }
 
   data$Binom_compile <- result.list
