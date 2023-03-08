@@ -4,7 +4,7 @@
 \alias{ExtractStartEnd}
 \title{Extract start and end position from grange}
 \usage{
-ExtractStartEnd(grange, strand = "*")
+ExtractStartEnd(grange, strand = NULL)
 }
 \arguments{
 \item{grange}{input grange}

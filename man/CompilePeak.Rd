@@ -11,7 +11,7 @@ CompilePeak(
   DistIn = 1e+06,
   parallel = FALSE,
   save = NULL,
-  strand = FALSE
+  strand = NULL
 )
 }
 \arguments{

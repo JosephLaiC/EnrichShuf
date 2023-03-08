@@ -10,7 +10,7 @@ DistCalculate(
   name = "name",
   DistIn = 1e+06,
   OVERLAY.ONLY = FALSE,
-  strand = FALSE,
+  strand = NULL,
   verbose = FALSE
 )
 }

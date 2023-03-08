@@ -281,7 +281,12 @@ ObsExpCompareByBin <- function(
 }
 
 
-## Downstream function is for getting significant enriched peaks
+#' Combine the observe and expect info to do the statistic.
+#' 
+#' @param observe Observe info.
+#' @param expect Expect info.
+#' 
+#' @export
 ObsExpCompile <- function(expect, observe=observe) {
 
   peak.set <- observe
@@ -296,7 +301,14 @@ ObsExpCompile <- function(expect, observe=observe) {
 
 }
 
-
+#' Combine the observe and multiple expect info to do the statistic.
+#' 
+#' @param observe Observe info.
+#' @param expect Expect info.
+#' @param parallel If TRUE, will apply bapply to run the process.
+#' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
+#' 
+#' @export
 ObsExpCompileList <- function(
   expect, observe=observe, parallel=FALSE, expect.name=NULL) {
   
@@ -334,6 +346,15 @@ ObsExpCompileList <- function(
 }
 
 
+#' Combine the observe and expect info from RDS files to do the statistic.
+#' 
+#' @param shuffleRDS PATH to shuffle info. Could assign as a list of RDS files.
+#' @param observeRDS PATH to observe info.
+#' @param dist Distance to calculate the number of peaks.
+#' @param parallel If TRUE, will apply bapply to run the process.
+#' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
+#' 
+#' @export
 ObsExpRDS <- function(
   shuffleRDS, observeRDS=observeRDS, dist=1000000, parallel=FALSE, expect.name=NULL) {
 
@@ -398,11 +419,17 @@ ObsExpRDS <- function(
   return(result)
 }
 
-
+#' Perform the statistic for the observe and expect info by exact testing based on edgeR.
+#' 
+#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.
+#' @param type The type of statistic. Could be "binomial", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomial".
+#' @param parallel If TRUE, will apply bapply to run the process.
+#' 
+#' @export
 ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
 
   if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
-    stop("The data should be a list with observe, expect and log2FC, export by featureCompare or EnrichCompare.")
+    stop("The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.")
   }
 
   if (is.character(type)) {
@@ -504,10 +531,15 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
   return(data)
 }
 
+#' Get up or down info from the info of observe and expect to perform binomial test.
+#' 
+#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.
+#' 
+#' @export
 ObsExpBinomTable <- function(data) {
 
   if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
-    stop("The data should be a list with observe, expect and log2FC, export by featureCompare or EnrichCompare.")
+    stop("The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.")
   }
 
   if (!is.list(data[["expect"]])) {
@@ -524,6 +556,13 @@ ObsExpBinomTable <- function(data) {
   return(data)
 }
 
+
+#' Perform binomial test for the up and down targets.
+#' 
+#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
+#' @param n The number of bins to perform the binomial test.
+#' 
+#' @export
 ObsExpBinomial <- function(data, n=10) {
 
   if (!"BinomTable"%in%names(data)) {
@@ -533,13 +572,13 @@ ObsExpBinomial <- function(data, n=10) {
 
   up.res   <- lapply(n, function(x) 
     lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
-      binom.test(y, x, alternative="greater")$p.value))
+      binom.test(y, x, alternative="greater")$p.value) %>% unlist())
   down.res <- lapply(n, function(x)
     lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
-      binom.test(y, x, alternative="less")$p.value))
+      binom.test(y, x, alternative="less")$p.value) %>% unlist())
   two.res  <- lapply(n, function(x)
     lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
-      binom.test(y, x, alternative="two.sided")$p.value))
+      binom.test(y, x, alternative="two.sided")$p.value) %>% unlist())
   list.res <- lapply(n, function(x) colnames(data$BinomTable[[1]])[1:x])
 
   names(up.res)   <- paste0("Binom_", n)
@@ -555,6 +594,11 @@ ObsExpBinomial <- function(data, n=10) {
   return(data)
 }
 
+#' Compile the binomial test results.
+#' 
+#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
+#' 
+#' @export
 ObsExpBinomCompile <- function(data) {
 
   if (!"Binom_Pval"%in%names(data)) {
@@ -579,3 +623,6 @@ ObsExpBinomCompile <- function(data) {
   data$Binom_compile <- result.list
   return(data)
 }
+
+
+
