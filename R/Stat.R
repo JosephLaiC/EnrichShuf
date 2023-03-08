@@ -554,3 +554,28 @@ ObsExpBinomial <- function(data, n=10) {
     list     = list.res)
   return(data)
 }
+
+ObsExpBinomCompile <- function(data) {
+
+  if (!"Binom_Pval"%in%names(data)) {
+    stop("The Binom_Pval is not found, please run ObsExpBinomial...")
+  }
+
+  observe      <- data$observe
+  expect.table <- data.frame(data$expect)
+  col.list     <- data$Binom_Pval$list
+
+  result.list <- NULL
+  for (i in names(col.list)) {
+    list <- col.list[[i]]
+
+    result.list[[i]] <- data.frame(
+      log2FC        = log2(observe+1) - log2(rowMeans(expect.table[,list])+1),
+      pVal_up       = data$up[[i]],
+      pVal_down     = data$down[[i]],
+      pVal_two_tail = data$two.tail[[i]])
+  }
+
+  data$Binom_compile <- result.list
+  return(data)
+}
