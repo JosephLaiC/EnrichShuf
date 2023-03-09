@@ -280,358 +280,57 @@ ObsExpCompareByBin <- function(
   return(result)
 }
 
-
-#' Combine the observe and expect info to do the statistic.
-#' 
-#' @param observe Observe info.
-#' @param expect Expect info.
+#' Compile the statistic result with intersect numbers from ObsExpCompare.
+#' @param data Result from ObsExpCompare.
 #' 
 #' @export
-ObsExpCompile <- function(expect, observe=observe) {
-
-  peak.set <- observe
-  observe  <- lapply(observe, function(x) length(x)) %>% unlist()
-  expect   <- lapply(expect , function(x) length(x)) %>% unlist()
-
-  result <- list(
-    PeakSet = peak.set,
-    observe = observe,
-    expect  = expect,
-    log2FC  = log2(observe+1)-log2(expect+1))
-
-}
-
-#' Combine the observe and multiple expect info to do the statistic.
-#' 
-#' @param observe Observe info.
-#' @param expect Expect info.
-#' @param parallel If TRUE, will apply bapply to run the process.
-#' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
-#' 
-#' @export
-ObsExpCompileList <- function(
-  expect, observe=observe, parallel=FALSE, expect.name=NULL) {
+ObsExpIntersectMerge <- function(data) {
   
-  peak.set <- observe
-  observe  <- lapply(observe, function(x) length(x)) %>% unlist()
-
-  if (isTRUE(parallel)) {
-
-    expect <- BiocParallel::bplapply(expect, function(x)
-      lapply(x, function(y) length(y)) %>% unlist())
-    log2FC <- BiocParallel::bplapply(expect, function(x) log2(observe+1)-log2(x+1))
-
-  } else {
-      
-    expect <- lapply(expect, function(x)
-      lapply(x, function(y) length(y)) %>% unlist())
-    log2FC <- lapply(expect, function(x) log2(observe+1)-log2(x+1))
-
+  if (!all(names(data)%in%c("statistic", "expectNum"))) {
+    stop("Please assign the result from ObsExpCompare")
   }
-
-  if (is.null(expect.name)) {
-    names(expect) <- paste0("Shuffle_", 1:length(expect))
-    names(log2FC) <- paste0("Shuffle_", 1:length(log2FC))
-  } else {
-    names(expect) <- expect.name
-    names(log2FC) <- expect.name
+  
+  type.list <- data$statistic[,"type"]
+  
+  if (!any(type.list%in%"intersect")) {
+    stop("Didn't find intersect number in statistic result")
   }
+  
+  Num <- length(type.list)
+  ## Expect number process
+  expectNum <- lapply(1:Num, function(x) {
+    if (x==1) {
+      data$expectNum[[x]]
+    } else {
+      data$expectNum[[x]] + data$expectNum[[1]]
+    }
+  })
+  
+  ## Extract observe numbers
+  observeNum <- data$statistic[,"observe.num"]
+  EXPECT.MEAN <- lapply(expectNum, function(x) mean(x)) %>% unlist()
+  EXPECT.SD   <- lapply(expectNum, function(x) sd(x))   %>% unlist()
+  
+  
+  log2FC  <- lapply(1:length(observeNum), function(x) 
+    log2(observeNum[x]/EXPECT.MEAN[[x]])) %>% unlist()
+  upper.p <- lapply(1:length(observeNum), function(x) 
+    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=FALSE)) %>% unlist()
+  lower.p <- lapply(1:length(observeNum), function(x) 
+    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=TRUE))  %>% unlist()
+  
+  statistic <- data.frame(
+    observe.num = observeNum,
+    expect.mean = EXPECT.MEAN,
+    expect.sd   = EXPECT.SD,
+    log2FC      = log2FC,
+    upper.p     = upper.p,
+    lower.p     = lower.p)
 
   result <- list(
-    PeakSet = peak.set,
-    expect  = expect,
-    observe = observe,
-    log2FC  = log2FC)
-
-}
-
-
-#' Combine the observe and expect info from RDS files to do the statistic.
-#' 
-#' @param shuffleRDS PATH to shuffle info. Could assign as a list of RDS files.
-#' @param observeRDS PATH to observe info.
-#' @param dist Distance to calculate the number of peaks.
-#' @param parallel If TRUE, will apply bapply to run the process.
-#' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
-#' 
-#' @export
-ObsExpRDS <- function(
-  shuffleRDS, observeRDS=observeRDS, dist=1000000, parallel=FALSE, expect.name=NULL) {
-
-  library(dplyr)
-
-  if (!is.character(observeRDS)) {
-    stop("The observeRDS should be character.")
-  }
-
-  if (!is.character(shuffleRDS)) {
-    stop("The shuffleRDS should be character.")
-  }
-    
-  if (file.exists(observeRDS)) {
-    observe <- readRDS(observeRDS) %>% 
-      { lapply(., function(x) x[x<=dist]) }
-  } else {
-    stop("The observeRDS file is not exists.")
-  }
-
-  if (length(shuffleRDS)==1) {
-      
-    if (file.exists(shuffleRDS)) {
-
-      expect <- readRDS(shuffleRDS) %>%
-        { lapply(., function(x) x[x<=dist]) }
-
-    } else {
-      stop("The shuffleRDS file is not exists.")
-    }
-
-    result <- ObsExpCompile(expect, observe=observe)
-
-  } else {
-
-    lapply(shuffleRDS, function(x) {
-          
-      if (!file.exists(x)) {
-        stop("The shuffleRDS file is not exists.")
-      } 
-          
-    })
-
-    if (isTRUE(parallel)) {
-
-      expect <- BiocParallel::bplapply(shuffleRDS, function(x) 
-        readRDS(x) %>% { lapply(., function(x) x[x<=dist]) } )
-      
-
-    } else {
-
-      expect <- lapply(shuffleRDS, function(x) 
-        readRDS(x) %>% { lapply(., function(x) x[x<=dist]) } )
-
-    }
-
-    result <- ObsExpCompileList(
-      expect, observe=observe, parallel=parallel, expect.name=expect.name)
-
-  }
+    statistic = statistic,
+    expectNum = expectNum)
 
   return(result)
-}
-
-#' Perform the statistic for the observe and expect info by exact testing based on edgeR.
-#' 
-#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.
-#' @param type The type of statistic. Could be "binomial", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomial".
-#' @param parallel If TRUE, will apply bapply to run the process.
-#' 
-#' @export
-ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
-
-  if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
-    stop("The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.")
-  }
-
-  if (is.character(type)) {
-
-    type.list <- c(
-      "binomial", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomial")
-
-    if (!all(type%in%type.list)) {
-      stop("The type should be one of ", paste(type.list, collapse=", "))
-    }
-
-  }
-
-  pval <- NULL
-  if (is.list(data[["expect"]])) {
-    
-    if (isTRUE(parallel)) {
-
-      if ("binomial"%in%type) {
-        pval[["binomial"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
-          edgeR::binomTest(data[["observe"]], x))
-      } 
-      
-      if ("exact_2tail"%in%type) {
-        pval[["exact_2tail"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
-          edgeR::exactTestDoubleTail(data[["observe"]], x))
-      } 
-      
-      if ("exact_sample_compare"%in%type) {
-        pval[["exact_sample_compare"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
-          edgeR::exactTestBySmallP(data[["observe"]], x))
-      } 
-      
-      if ("exact_deviance"%in%type) {
-        pval[["exact_deviance"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
-          edgeR::exactTestByDeviance(data[["observe"]], x))
-      } 
-      
-      if ("exact_binomial"%in%type) {
-        pval[["exact_deviance"]] <- BiocParallel::bplapply(data[["expect"]], function(x) 
-          edgeR::exactTestBetaApprox(data[["observe"]], x))
-      }
-
-    } else {
-       
-      if ("binomial"%in%type) {
-        pval[["binomial"]] <- lapply(data[["expect"]], function(x) 
-          edgeR::binomTest(data[["observe"]], x))
-      } 
-      
-      if ("exact_2tail"%in%type) {
-        pval[["exact_2tail"]] <- lapply(data[["expect"]], function(x) 
-          edgeR::exactTestDoubleTail(data[["observe"]], x))
-      } 
-      
-      if ("exact_sample_compare"%in%type) {
-        pval[["exact_sample_compare"]] <- lapply(data[["expect"]], function(x) 
-          edgeR::exactTestBySmallP(data[["observe"]], x))
-      } 
-      
-      if ("exact_deviance"%in%type) {
-        pval[["exact_deviance"]] <- lapply(data[["expect"]], function(x) 
-          edgeR::exactTestByDeviance(data[["observe"]], x))
-      } 
-      
-      if ("exact_binomial"%in%type) {
-        pval[["exact_deviance"]] <- lapply(data[["expect"]], function(x) 
-          edgeR::exactTestBetaApprox(data[["observe"]], x))
-      }
-
-    }
-
-  } else {
-
-    if ("binomial"%in%type) {
-      pval[["binomial"]] <- edgeR::binomTest(data[["observe"]], data[["expect"]])
-    } 
-      
-    if ("exact_2tail"%in%type) {
-      pval[["exact_2tail"]] <- edgeR::exactTestDoubleTail(data[["observe"]], data[["expect"]])
-    } 
-      
-    if ("exact_sample_compare"%in%type) {
-      pval[["exact_sample_compare"]] <- edgeR::exactTestBySmallP(data[["observe"]], data[["expect"]])
-    } 
-      
-    if ("exact_deviance"%in%type) {
-      pval[["exact_deviance"]] <- edgeR::exactTestByDeviance(data[["observe"]], data[["expect"]])
-    } 
-      
-    if ("exact_binomial"%in%type) {
-      pval[["exact_deviance"]] <- edgeR::exactTestBetaApprox(data[["observe"]], data[["expect"]])
-    }
-
-  }
-
-  data[["ExactSTAT"]] <- pval
-
-  return(data)
-}
-
-#' Get up or down info from the info of observe and expect to perform binomial test.
-#' 
-#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.
-#' 
-#' @export
-ObsExpBinomTable <- function(data) {
-
-  if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
-    stop("The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.")
-  }
-
-  if (!is.list(data[["expect"]])) {
-    stop("The expect should be a list, to generate the table, please use ObsExpBinomTableList.")
-  }
-
-  up.res   <- lapply(data[["expect"]], function(x) data[["observe"]] > x) %>% data.frame()
-  down.res <- lapply(data[["expect"]], function(x) data[["observe"]] < x) %>% data.frame()
-
-  colnames(up.res)   <- names(data[["expect"]])
-  colnames(down.res) <- names(data[["expect"]])
   
-  data$BinomTable <- list(up=up.res, down=down.res)
-  return(data)
 }
-
-
-#' Perform binomial test for the up and down targets.
-#' 
-#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
-#' @param n The number of bins to perform the binomial test.
-#' 
-#' @export
-ObsExpBinomial <- function(data, n=10) {
-
-  if (!"BinomTable"%in%names(data)) {
-    message("The BinomTable is not found, running ObsExpBinomTable...")
-    data <- ObsExpBinomTable(data)
-  }
-
-  up.res   <- lapply(n, function(x) 
-    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
-      binom.test(y, x, alternative="greater")$p.value) %>% unlist())
-  down.res <- lapply(n, function(x)
-    lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
-      binom.test(y, x, alternative="less")$p.value) %>% unlist())
-  two.res  <- lapply(n, function(x)
-    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
-      binom.test(y, x, alternative="two.sided")$p.value) %>% unlist())
-  list.res <- lapply(n, function(x) colnames(data$BinomTable[[1]])[1:x])
-
-  names(up.res)   <- paste0("Binom_", n)
-  names(down.res) <- paste0("Binom_", n)
-  names(two.res)  <- paste0("Binom_", n)
-  names(list.res) <- paste0("Binom_", n)
-
-  data$Binom_Pval <- list(
-    up       = up.res,
-    down     = down.res,
-    two.tail = two.res,
-    list     = list.res)
-  return(data)
-}
-
-#' Compile the binomial test results.
-#' 
-#' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
-#' @param p.adjust The p.adjust method, default is NULL.
-#' 
-#' @export
-ObsExpBinomCompile <- function(data, p.adjust=NULL) {
-
-  if (!"Binom_Pval"%in%names(data)) {
-    stop("The Binom_Pval is not found, please run ObsExpBinomial...")
-  }
-
-  observe      <- data$observe
-  expect.table <- data.frame(data$expect)
-  col.list     <- data$Binom_Pval$list
-
-  result.list <- NULL
-  for (i in names(col.list)) {
-    list <- col.list[[i]]
-
-    result.list[[i]] <- data.frame(
-      log2FC        = log2(observe+1) - log2(rowMeans(expect.table[,list])+1),
-      pVal_up       = data$Binom_Pval$up[[i]],
-      pVal_down     = data$Binom_Pval$down[[i]],
-      pVal_two_tail = data$Binom_Pval$two.tail[[i]])
-  }
-
-  if (!is.null(p.adjust)) {
-    for (i in names(result.list)) {
-      result.list[[i]]$FDR_up       <- p.adjust(result.list[[i]]$pVal_up, method=p.adjust)
-      result.list[[i]]$FDR_down     <- p.adjust(result.list[[i]]$pVal_down, method=p.adjust)
-      result.list[[i]]$FDR_two_tail <- p.adjust(result.list[[i]]$pVal_two_tail, method=p.adjust)
-    }
-  }
-
-  data$Binom_compile <- result.list
-  return(data)
-}
-
-
-
