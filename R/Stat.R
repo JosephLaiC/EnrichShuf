@@ -307,7 +307,14 @@ ObsExpIntersectMerge <- function(data) {
   })
   
   ## Extract observe numbers
-  observeNum <- data$statistic[,"observe.num"]
+  observeNum <- lapply(1:Num, function(x) {
+    if (x==1) {
+      data$statistic[,"observe.num"][x]
+    } else {
+      data$statistic[,"observe.num"][x] + data$statistic[,"observe.num"][1]
+    }
+  }) %>% unlist()
+
   EXPECT.MEAN <- lapply(expectNum, function(x) mean(x)) %>% unlist()
   EXPECT.SD   <- lapply(expectNum, function(x) sd(x))   %>% unlist()
   
@@ -315,17 +322,18 @@ ObsExpIntersectMerge <- function(data) {
   log2FC  <- lapply(1:length(observeNum), function(x) 
     log2(observeNum[x]/EXPECT.MEAN[[x]])) %>% unlist()
   upper.p <- lapply(1:length(observeNum), function(x) 
-    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=FALSE)) %>% unlist()
+    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=FALSE, log.p=TRUE)) %>% unlist()
   lower.p <- lapply(1:length(observeNum), function(x) 
-    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=TRUE))  %>% unlist()
+    pnorm(observeNum[x], mean=EXPECT.MEAN[x], sd=EXPECT.SD[x], lower.tail=TRUE, log.p=TRUE))  %>% unlist()
   
   statistic <- data.frame(
-    observe.num = observeNum,
-    expect.mean = EXPECT.MEAN,
-    expect.sd   = EXPECT.SD,
-    log2FC      = log2FC,
-    upper.p     = upper.p,
-    lower.p     = lower.p)
+    type         = type.list,
+    observe.num  = observeNum,
+    expect.mean  = EXPECT.MEAN,
+    expect.sd    = EXPECT.SD,
+    log2FC       = log2FC,
+    Norm_upper_P = upper.p,
+    Norm_lower_P = lower.p)
 
   result <- list(
     statistic = statistic,
