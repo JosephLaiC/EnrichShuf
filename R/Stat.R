@@ -342,6 +342,14 @@ ObsExpIntersectMerge <- function(data) {
   
 }
 
+#' Radomly select peaks from a GRanges object.
+#'
+#' @param grange GRanges object.
+#' @param seed Seed number.
+#' @param n Number of peaks to select.
+#' @param origin.n Number of peaks in grange.
+#' 
+#' @export
 randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
 
   if (is.null(n)) {
@@ -357,6 +365,17 @@ randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
 
 }
 
+#' Calculate specific peak's enrichment factor by compare with random peaks.
+#' 
+#' @param subject.name A character vector of peak name.
+#' @param query A GRanges object of query peaks.
+#' @param factor A GRanges object of factor peaks.
+#' @param random.num Number of random times to get expect result.
+#' @param pval P-value cutoff.
+#' @param parallel If TRUE, will use parallel to calculate.
+#' @param peak.name The column name of peak name in query.
+#' 
+#' @export
 PeakFactorStat <- function(
   subject.name, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
 
@@ -436,6 +455,18 @@ PeakFactorStat <- function(
 #         GenomicRanges::findOverlaps(., factor) %>% 
 #         { data.frame(.)[,1] } %>% unique() %>% length()
 
+
+#' Calculate specific peak's (intersect with subject) enrichment factor by compare with random peaks.
+#' 
+#' @param subject A GRanges object of subject peaks.
+#' @param query A GRanges object of query peaks.
+#' @param factor A GRanges object of factor peaks.
+#' @param random.num Number of random times to get expect result.
+#' @param pval P-value cutoff.
+#' @param parallel If TRUE, will use parallel to calculate.
+#' @param peak.name The column name of peak name in query.
+#' 
+#' @export
 PeaktoPeakIntersect <- function(
   subject, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
 
