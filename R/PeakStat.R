@@ -299,6 +299,7 @@ ObsExpBinomTable <- function(data) {
 #' 
 #' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
 #' @param n The number of bins to perform the binomial test.
+#' @param parallel If TRUE, use BiocParallel to perform the binomial test.
 #' 
 #' @export
 ObsExpBinomial <- function(data, n=10, parallel=FALSE) {

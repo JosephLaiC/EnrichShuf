@@ -17,5 +17,4 @@ Imports:
   readr,
   stringr,
   GenomicFeatures,
-  BiocParallel,
-  ChIPseeker
+  BiocParallel

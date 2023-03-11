@@ -23,6 +23,8 @@ ObsExpRDS(
 \item{parallel}{If TRUE, will apply bapply to run the process.}
 
 \item{expect.name}{list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...}
+
+\item{intersect}{If TRUE, will extract the distance smaller than dist. If FALSE, will extract the distance larger than 0 and smaller than dist.}
 }
 \description{
 Combine the observe and expect info from RDS files to do the statistic.

@@ -4,12 +4,14 @@
 \alias{ObsExpBinomial}
 \title{Perform binomial test for the up and down targets.}
 \usage{
-ObsExpBinomial(data, n = 10)
+ObsExpBinomial(data, n = 10, parallel = FALSE)
 }
 \arguments{
 \item{data}{The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.}
 
 \item{n}{The number of bins to perform the binomial test.}
+
+\item{parallel}{If TRUE, use BiocParallel to perform the binomial test.}
 }
 \description{
 Perform binomial test for the up and down targets.
