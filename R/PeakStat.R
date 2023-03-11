@@ -90,6 +90,7 @@ ExtractDistance <- function(data, dist=dist, intersect=TRUE) {
 #' @param dist Distance to calculate the number of peaks.
 #' @param parallel If TRUE, will apply bapply to run the process.
 #' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
+#' @param intersect If TRUE, will extract the distance smaller than dist. If FALSE, will extract the distance larger than 0 and smaller than dist.
 #' 
 #' @export
 ObsExpRDS <- function(
@@ -300,33 +301,38 @@ ObsExpBinomTable <- function(data) {
 #' @param n The number of bins to perform the binomial test.
 #' 
 #' @export
-ObsExpBinomial <- function(data, n=10) {
+ObsExpBinomial <- function(data, n=10, parallel=FALSE) {
 
   if (!"BinomTable"%in%names(data)) {
     message("The BinomTable is not found, running ObsExpBinomTable...")
     data <- ObsExpBinomTable(data)
   }
 
-  up.res   <- lapply(n, function(x) 
-    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
+  if (isTRUE(parallel)) {
+    up.res   <- BiocParallel::bplapply(n, function(x) 
+      lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
       binom.test(y, x, alternative="greater")$p.value) %>% unlist())
-  down.res <- lapply(n, function(x)
-    lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
+    down.res <- BiocParallel::bplapply(n, function(x)
+      lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
       binom.test(y, x, alternative="less")$p.value) %>% unlist())
-  two.res  <- lapply(n, function(x)
-    lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
-      binom.test(y, x, alternative="two.sided")$p.value) %>% unlist())
+  } else {
+    up.res   <- lapply(n, function(x) 
+      lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
+      binom.test(y, x, alternative="greater")$p.value) %>% unlist())
+    down.res <- lapply(n, function(x)
+      lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
+      binom.test(y, x, alternative="less")$p.value) %>% unlist())
+  }
+
   list.res <- lapply(n, function(x) colnames(data$BinomTable[[1]])[1:x])
 
   names(up.res)   <- paste0("Binom_", n)
   names(down.res) <- paste0("Binom_", n)
-  names(two.res)  <- paste0("Binom_", n)
   names(list.res) <- paste0("Binom_", n)
 
   data$Binom_Pval <- list(
     up       = up.res,
     down     = down.res,
-    two.tail = two.res,
     list     = list.res)
   return(data)
 }
