@@ -315,14 +315,14 @@ ObsExpBinomial <- function(data, n=10, parallel=FALSE) {
       binom.test(y, x, alternative="greater")$p.value) %>% unlist())
     down.res <- BiocParallel::bplapply(n, function(x)
       lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
-      binom.test(y, x, alternative="less")$p.value) %>% unlist())
+      binom.test(y, x, alternative="greater")$p.value) %>% unlist())
   } else {
     up.res   <- lapply(n, function(x) 
       lapply(rowSums(data[["BinomTable"]][["up"]][,1:x]), function(y)
       binom.test(y, x, alternative="greater")$p.value) %>% unlist())
     down.res <- lapply(n, function(x)
       lapply(rowSums(data[["BinomTable"]][["down"]][,1:x]), function(y)
-      binom.test(y, x, alternative="less")$p.value) %>% unlist())
+      binom.test(y, x, alternative="greater")$p.value) %>% unlist())
   }
 
   list.res <- lapply(n, function(x) colnames(data$BinomTable[[1]])[1:x])
