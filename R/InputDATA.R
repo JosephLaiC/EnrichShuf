@@ -125,7 +125,7 @@ ExtractCorrelate <- function(
 
   }
 
-  TABLE <- ChIPseeker::annotatePeak(grange, tssRegion=c(0,0), TxDb=txdb, verbose=verbose) %>% data.frame()
+  TABLE <- ChIPseeker::annotatePeak(grange, TxDb=txdb, verbose=verbose) %>% data.frame()
 
   if (!all(EXTRACT.NAME%in%colnames(TABLE))){
     stop("Check the ChIPseeker version..")
