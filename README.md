@@ -3,11 +3,24 @@
 ## Dependency
 
 ```
-R              1.34.1
-data.table     1.14.6
-dplyr          1.0.10
-GenomicRanges  1.50.2
-ChIPseeker     1.34.1
+## regular package
+readr
+data.table
+dplyr
+stringr
+
+## Bioconductor package
+GenomicRanges
+ChIPseeker
+```
+
+To build this package under conda environment
+
+```
+conda install -c conda-forge -c defaults -c bioconda\
+  bioconductor-chipseeker\
+  bioconductor-genomicranges\
+  r-devtools r-readr r-stringr r-data.table
 ```
 
 
