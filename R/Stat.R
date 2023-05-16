@@ -342,6 +342,76 @@ ObsExpIntersectMerge <- function(data) {
   
 }
 
+
+#' Randomly select factors from a list.
+#' 
+#' @param list A character vector.
+#' @param seed Seed number.
+#' @param n Number of factors to select.
+#' 
+#' @export
+randomFactor <- function(list, seed=1, n=NULL) {
+
+  if (!is.character(list)) {
+    stop("Please assign a character vector to list")
+  }
+
+  if (is.null(n)) {
+    stop("Please assign a number to n")
+  }
+
+  set.seed(seed)
+  return(sample(list, n, replace=TRUE)) ## true means could be sample will be put back to list
+
+}
+
+TargetFactorSTAT <- function(
+  factor, total=NULL, element=NULL, random.num=10000) {
+
+  if (is.null(total)) {
+    stop("Please assign a character to total")
+  }
+
+  if (is.null(element)) {
+    stop("Please assign a character to element")
+  }
+
+  if (!is.character(factor)) {
+    stop("Please assign a character vector to factor")
+  }
+
+  if (!is.character(total)) {
+    stop("Please assign a character vector to total")
+  }
+
+  if (!is.character(element)) {
+    stop("Please assign a character vector to element")
+  }
+
+  if (!all(element%in%total)) {
+    message("Some elements are not in total... will remove them")
+    element <- element[element%in%total]
+  }
+
+
+  total.factor     <- total[total%in%factor]
+  total.factor.num <- length(total.factor)
+
+  ## Associate factor with element
+  element.factor.num <- sum(total.factor%in%element)
+
+  ## Randomly select elements from total
+  expect.num <- lapply(1:random.num, function(x) 
+    sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  ## Calculate the statistic
+
+
+}
+
+
+
+
 #' Radomly select peaks from a GRanges object.
 #'
 #' @param grange GRanges object.
