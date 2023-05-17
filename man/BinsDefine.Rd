@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parse.R
 \name{BinsDefine}
 \alias{BinsDefine}
-\title{Get the interval from min to max by bins.}
+\title{Get the intervals from min to max by bins.}
 \usage{
 BinsDefine(bin = NULL, min = NULL, max = NULL, type = NULL)
 }
@@ -20,5 +20,5 @@ BinsDefine(bin = NULL, min = NULL, max = NULL, type = NULL)
 "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
 }
 \description{
-Get the interval from min to max by bins.
+Get the intervals from min to max by bins.
 }
