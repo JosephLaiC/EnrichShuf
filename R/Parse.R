@@ -103,7 +103,7 @@ compileCorrelation <- function(
 
 }
 
-#' Get the interval from min to max by bins.
+#' Get the intervals from min to max by bins.
 #'
 #' @param bin Interval size of each window.
 #' @param min Minimum number of conditions

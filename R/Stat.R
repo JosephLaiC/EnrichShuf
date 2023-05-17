@@ -365,8 +365,17 @@ randomFactor <- function(list, seed=1, n=NULL) {
 
 }
 
+#' Associate factors to elements in a total list and calculate the significance
+#' 
+#' @param factor A character vector of factors.
+#' @param total A character vector of total elements.
+#' @param element A character vector of elements to be associated.
+#' @param random.num Number of random times to get expect result.
+#' @param log.p If TRUE, will log2 the p.value.
+#' 
+#' @export
 TargetFactorSTAT <- function(
-  factor, total=NULL, element=NULL, random.num=10000) {
+  factor, total=NULL, element=NULL, random.num=10000, log.p=FALSE) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -398,15 +407,21 @@ TargetFactorSTAT <- function(
   total.factor.num <- length(total.factor)
 
   ## Associate factor with element
-  element.factor.num <- sum(total.factor%in%element)
+  observe.num <- sum(total.factor%in%element)
 
   ## Randomly select elements from total
   expect.num <- lapply(1:random.num, function(x) 
     sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
 
   ## Calculate the statistic
+  result <- data.frame(
+    log2FC       = log2(observe.num/mean(expect.num)),
+    upper_pval   = pnorm(
+      observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
+    lower_pval   = pnorm(
+      observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=TRUE , log.p=log.p))
 
-
+  return(result)
 }
 
 
