@@ -86,6 +86,126 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 
 }
 
+
+#' Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.
+#' 
+#' @param factor input the factor data.frame or the path to bed file.
+#' @param element input the element data.frame or the path to bed file.
+#' @param strand.INFO if assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
+FactorElementCorrelate <- function(
+  factor, element=element, strand.INFO=TRUE) {
+  
+  ## Check factor format and input
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
+    }
+    
+    factor <- valr::bed_read(factor, n_fields=4)
+    colnames(factor)[4] <- "factor_name" 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    colnames(factor) <- c("chrom", "start", "end", "factor_name")
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    factor <- data.frame(factor)
+    
+    if (!all(c("seqnames", "start", "end", "name")%in%colnames(factor))) {
+      stop("Check the factor grange contains the name information")
+    }
+    
+    factor <- factor[,c("seqnames", "start", "end", "name")]
+    colnames(factor) <- c("chrom", "start", "end", "factor_name")
+    
+  } else {
+    stop("Check the factor format")
+  }
+  
+  ## Check element format and input
+  if (is.character(element)) {
+    
+    if (!file.exists(element)) {
+      stop("Check the element file exsist in path")
+    }
+    
+    element <- valr::bed_read(element, n_fields=4)
+    colnames(element)[4] <- "element_name" 
+    
+  } else if (is.data.frame(element)) {
+    
+    element <- element[,1:4]
+    colnames(element) <- c("chrom", "start", "end", "element_name")
+    
+  } else if (class(element)[[1]]=="GRanges") {
+    
+    element <- data.frame(element)
+    
+    if (!all(c("seqnames", "start", "end", "name")%in%colnames(element))) {
+      stop("Check the element grange contains the name information")
+    }
+    
+    element <- element[,c("seqnames", "start", "end", "name")]
+    colnames(element) <- c("chrom", "start", "end", "element_name")
+    
+  } else {
+    stop("Check the element format")
+  }
+  
+  table <- valr::bed_closest(factor, element)[
+    ,c("factor_name.x", "element_name.y", ".dist", ".overlap")] %>% data.frame()
+  colnames(table) <- c("factor_name", "element_name", "distance", "overlap")
+  
+  intersect <- table[table$distance==0,] %>% 
+    { .[order(.$overlap, decreasing=TRUE),] }
+  
+  multi.overlap <- table(intersect$factor_name) %>% 
+    { .[.>1] } %>% names()
+  
+  if (length(multi.overlap) > 0) {
+    
+    multi.info <- lapply(multi.overlap, function(x) 
+      intersect[intersect$factor_name==x,] %>% { .[1,] }) %>%
+      Reduce(rbind, .)
+    
+    intersect.info <- rbind(
+      intersect[!intersect$factor_name%in%multi.overlap,], multi.info) 
+    
+  } else {
+    
+    intersect.info <- intersect
+    
+  }
+  
+  associate <- table[!table$factor_name%in%intersect.info$factor_name,]
+  multi.associate <- table(associate$factor_name) %>% 
+    { .[.>1] } %>% names()
+  
+  if (length(multi.associate) > 0) {
+    
+    multi.info <- lapply(multi.associate, function(x) 
+      associate[associate$factor_name==x,] %>% { .[1,] }) %>%
+      Reduce(rbind, .)
+    
+    associate.info <- rbind(
+      associate[!associate$factor_name%in%multi.associate,], multi.info) 
+    
+  } else {
+    
+    associate.info <- associate
+    
+  }
+  
+  result <- rbind(intersect.info, associate.info)
+  return(result)
+  
+}
+
+
+
 #' Output the distance of factor X to nearest element A.
 #'
 #' Extract the correlated information from factor X to txdb object made by element A.
