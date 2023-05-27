@@ -9,7 +9,8 @@ TargetFactorSTAT(
   total = NULL,
   element = NULL,
   random.num = 10000,
-  log.p = FALSE
+  log.p = FALSE,
+  parallel = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ TargetFactorSTAT(
 \item{random.num}{Number of random times to get expect result.}
 
 \item{log.p}{If TRUE, will log2 the p.value.}
+
+\item{parallel}{If TRUE, will use parallel to do the calculation.}
 }
 \description{
 Associate factors to elements in a total list and calculate the significance

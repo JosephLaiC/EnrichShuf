@@ -372,10 +372,11 @@ randomFactor <- function(list, seed=1, n=NULL) {
 #' @param element A character vector of elements to be associated.
 #' @param random.num Number of random times to get expect result.
 #' @param log.p If TRUE, will log2 the p.value.
+#' @param parallel If TRUE, will use parallel to do the calculation.
 #' 
 #' @export
 TargetFactorSTAT <- function(
-  factor, total=NULL, element=NULL, random.num=10000, log.p=FALSE) {
+  factor, total=NULL, element=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -410,11 +411,22 @@ TargetFactorSTAT <- function(
   observe.num <- sum(total.factor%in%element)
 
   ## Randomly select elements from total
-  expect.num <- lapply(1:random.num, function(x) 
-    sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+  if (isTRUE(parallel)) {
+
+    expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
+      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  } else {
+
+    expect.num <- lapply(1:random.num, function(x) 
+      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  }
 
   ## Calculate the statistic
   result <- data.frame(
+    observe      = observe.num,
+    expect       = mean(expect.num),
     log2FC       = log2(observe.num/mean(expect.num)),
     upper_pval   = pnorm(
       observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
