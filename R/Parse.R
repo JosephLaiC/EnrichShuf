@@ -58,6 +58,78 @@ CountCorrelation <- function(
 
 }
 
+
+
+CountCorrelation_factor <- function(
+    data, intersect=TRUE,
+    condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
+
+  #library(readr); library(stringr)
+
+  if (is.data.frame(data)){
+    data <- data
+  } else if (is.character(data)){
+    data <- data.frame(readr::read_tsv(data, show_col_types=FALSE))
+  } else {
+    stop("Check the input data format, could be dataframe or file path")
+  }
+
+  result <- NULL
+
+  if (isTRUE(intersect)){
+    number <- length(which(data[,4] == 0))
+    names(number) <- "intersect"
+    result <- c(result, number)
+  }
+
+  result <- c(result, unlist(lapply(condition, function(x){
+    
+    condition.list <- stringr::str_split(x, "-")[[1]] %>% as.numeric()
+    
+    if (any(!length(condition.list)==2, is.na(condition.list))){
+      
+      message("error with condition of ", x, " , ignore..")
+      return(NA)
+
+    } else {
+      
+      MIN <- min(condition.list)
+      MAX <- max(condition.list)
+      number <- length(which(data[,4] > MIN& data[,4] <= MAX))
+      names(number) <- paste(MIN, MAX, sep="_")
+      number
+
+    }
+  }
+  )))
+
+  # for (i in 1:length(condition)){
+
+  #   condition.list <- stringr::str_split(condition[i], "-")[[1]] %>% as.numeric()
+
+  #   if (any(!length(condition.list)==2, is.na(condition.list))){
+
+  #     message("error with condition of ", condition[i], " , ignore..")
+  #     next
+
+  #   } else {
+
+  #     MIN <- min(condition.list)
+  #     MAX <- max(condition.list)
+
+  #     number <- length(which(data[,4] > MIN& data[,4] <= MAX))
+  #     names(number) <- paste(MIN, MAX, sep="_")
+  #     result <- c(result, number)
+
+  #   }
+
+  # }; result$type <- factor(result$type, levels=result$type)
+
+  return(result)
+
+}
+
+
 #' Input shuffle peaks correlated (annotation) information as a list object.
 #'
 #' @param dir Directory of shuffle peak sets
@@ -167,6 +239,19 @@ CountCorrelationByBin <- function(
   return(table)
 
 }
+
+CountCorrelationByBin_factor <- function(
+    data, intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){
+
+  condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
+  table     <- CountCorrelation_factor(data, intersect=intersect, condition=condition)
+  return(table)
+
+}
+
+
+
+
 
 #' Input shuffle peaks correlated (annotation) information as a list object.
 #'

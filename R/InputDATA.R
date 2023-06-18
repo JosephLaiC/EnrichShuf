@@ -190,7 +190,8 @@ FactorElementCorrelate <- function(
 }
 
 FactorShufCorrelate <- function(
-  factor, element=element, strand=FALSE, tag=FALSE, genome=genome, incl=NULL, excl=NULL, seed=1) {
+  factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
+  genome=genome, incl=NULL, excl=NULL, seed=1) {
 
   if (is.character(factor)) {
     
@@ -228,8 +229,34 @@ FactorShufCorrelate <- function(
     stop("Check the genome format")
   }
 
-  
+  if (all(!is.null(incl), !is.null(excl))) {
+    
+    stop("Check the incl and excl, only could specify one")
+
+  } else if (!is.null(excl)) {
+
+    incl    <- data.frame(
+      chrom = data.frame(genome)[,1],
+      start = 0,
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(excl)
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else if (!is.null(incl)) {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed)
+
+  }
+
+  result <- FactorElementCorrelate(
+    shuffle, element=element, strand=strand, tag=tag, outloc=outloc)
+  return(result)
 
 }
+
+
 
 
