@@ -253,7 +253,7 @@ FactorShufCorrelate <- function(
     incl    <- data.frame(
       chrom = data.frame(genome)[,1],
       start = 0,
-      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(excl)
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
     shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
 
   } else if (!is.null(incl)) {
@@ -516,7 +516,7 @@ ObsExpObj <- function(
     incl    <- data.frame(
       chrom = data.frame(genome)[,1],
       start = 0,
-      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(excl)
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
 
   } 
 
