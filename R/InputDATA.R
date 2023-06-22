@@ -524,7 +524,7 @@ ObsExpObj <- function(
     factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
     genome=genome, incl=NULL, excl=NULL, seed=1)
 
-  if (is.null(incl)) {
+  if (all(is.null(incl), is.null(excl))) {
 
     if (isTRUE(parrallel)) {
 
