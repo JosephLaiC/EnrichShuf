@@ -4,7 +4,7 @@
 #' @param element input the element data.frame or the path to bed file.
 #' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
 #' @param tag if assign as TRUE means output the tag information in the analysis.
-#' @param outloc 
+#' @param outloc The location of output file.
 #' 
 #' @export 
 FactorElementCorrelate <- function(
@@ -197,7 +197,11 @@ FactorElementCorrelate <- function(
 #' @param element input the element data.frame or the path to bed file.
 #' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
 #' @param tag if assign as TRUE means output the tag information in the analysis.
-#' 
+#' @param outloc The location of output file.
+#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
+#' @param incl The interval information contained included regions.
+#' @param excl The interval information contained excluded regions.
+#' @param seed The seed number for shuffle.
 #' 
 #' @export 
 FactorShufCorrelate <- function(
@@ -391,11 +395,26 @@ CountCorrelationByBin <- function(
 
 }
 
-
-ObsExpCompare <- function(
+#' Create the object contained the information of observe and expect.
+#' 
+#' @param factor input the factor data frame or the path to bed file.
+#' @param element input the element data frame or the path to bed file.
+#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
+#' @param tag if assign as TRUE means output the tag information in the analysis.
+#' @param outloc The location of output file.
+#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
+#' @param incl The interval information contained included regions.
+#' @param excl The interval information contained excluded regions.
+#' @param random.n Times of shuffle.
+#' @param intersect If assign as TRUE, result will contained intersect number.
+#' @param condition Range of distance to nearest factor. Two number saperate by "-".
+#' 
+#' @export
+ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")) {
+  condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
+  parrallel=FALSE) {
 
   if (is.character(factor)) {
     
@@ -500,14 +519,55 @@ ObsExpCompare <- function(
 
   } 
 
+  FactorShufCorrelate <- function(
+    factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
+    genome=genome, incl=NULL, excl=NULL, seed=1)
+
   if (is.null(incl)) {
 
+    if (isTRUE(parrallel)) {
 
+      shuffle <- lapply(1:random.n, function(x)
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+          genome = genome, seed = x) %>% 
+        CountCorrelation(intersect = intersect, condition = condition))
+
+    } else {
+
+      shuffle <- BiocParallel::bplapply(1:random.n, function(x)
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+          genome = genome, seed = x) %>% 
+        CountCorrelation(intersect = intersect, condition = condition))
+
+
+    } 
+
+  } else {
+     
+    if (isTRUE(parrallel)) {
+
+      shuffle <- lapply(1:random.n, function(x)
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+          genome = genome, incl = incl, seed = x) %>% 
+        CountCorrelation(intersect = intersect, condition = condition))
+
+    } else {
+       
+      shuffle <- BiocParallel::bplapply(1:random.n, function(x)
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+          genome = genome, incl = incl, seed = x) %>% 
+        CountCorrelation(intersect = intersect, condition = condition))
+
+    }
 
   }
 
-
-
+  result <- list(observe = observe, expect = shuffle)
+  return(result)
 
 }
 
