@@ -528,7 +528,7 @@ ObsExpObj <- function(
 
     if (isTRUE(parrallel)) {
 
-      shuffle <- BiocParallel::bplapply(1:random.n, function(x)
+      expect <- BiocParallel::bplapply(1:random.n, function(x)
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, seed = x) %>% 
@@ -536,7 +536,7 @@ ObsExpObj <- function(
 
     } else {
 
-      shuffle <- lapply(1:random.n, function(x)
+      expect <- lapply(1:random.n, function(x)
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, seed = x) %>% 
@@ -549,7 +549,7 @@ ObsExpObj <- function(
      
     if (isTRUE(parrallel)) {
 
-      shuffle <- BiocParallel::bplapply(1:random.n, function(x)
+      expect <- BiocParallel::bplapply(1:random.n, function(x)
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
@@ -557,7 +557,7 @@ ObsExpObj <- function(
 
     } else {
        
-      shuffle <- lapply(1:random.n, function(x)
+      expect <- lapply(1:random.n, function(x)
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
@@ -567,7 +567,7 @@ ObsExpObj <- function(
 
   }
 
-  result <- list(observe = observe, expect = shuffle)
+  result <- list(observe = observe, expect = expect)
   return(result)
 
 }
