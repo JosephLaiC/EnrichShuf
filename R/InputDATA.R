@@ -487,7 +487,8 @@ ObsExpObj <- function(
 
   ## observe result
   observe <- FactorElementCorrelate(
-    factor = factor, element = element, strand = strand, tag = tag)
+    factor = factor, element = element, strand = strand, tag = tag) %>%
+    CountCorrelation(intersect = intersect, condition = condition)
 
   ## Shuffle preprocess 
   if (is.character(genome)) {
