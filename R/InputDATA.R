@@ -19,7 +19,7 @@ FactorElementCorrelate <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::bed_read(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -44,11 +44,11 @@ FactorElementCorrelate <- function(
     
     if (isTRUE(strand)) {
       
-      element <- valr::bed_read(element, n_fields=6)[,1:6]
+      element <- valr::read_bed(element, n_fields=6)[,1:6]
       
     } else {
       
-      element <- valr::bed_read(element, n_fields=4)[,1:4]
+      element <- valr::read_bed(element, n_fields=4)[,1:4]
       
     }
     
@@ -214,7 +214,7 @@ FactorShufCorrelate <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::bed_read(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -422,7 +422,7 @@ ObsExpObj <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::bed_read(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -447,11 +447,11 @@ ObsExpObj <- function(
     
     if (isTRUE(strand)) {
       
-      element <- valr::bed_read(element, n_fields=6)[,1:6]
+      element <- valr::read_bed(element, n_fields=6)[,1:6]
       
     } else {
       
-      element <- valr::bed_read(element, n_fields=4)[,1:4]
+      element <- valr::read_bed(element, n_fields=4)[,1:4]
       
     }
     
