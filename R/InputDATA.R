@@ -416,28 +416,129 @@ ObsExpObj <- function(
   condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
   parrallel=FALSE) {
 
-   ## observe result
-   observe <- FactorElementCorrelate(
-     factor = factor, element = element, strand = strand, tag = tag) %>%
-     CountCorrelation(intersect = intersect, condition = condition)
+  if (is.character(factor)) {
     
-    if (isTRUE(parrallel)) {
-
-      expect <- BiocParallel::bplapply(1:random.n, function(x)
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
-          genome = genome, incl = incl, excl = excl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition))
-
-    } else {
-       
-      expect <- lapply(1:random.n, function(x)
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
-          genome = genome, incl = incl, excl = excl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition))
-
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
     }
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the factor format")
+  }
+
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
+  
+  ## Check element format and input
+  if (is.character(element)) {
+    
+    if (!file.exists(element)) {
+      stop("Check the element file exsist in path")
+    }
+    
+    if (isTRUE(strand)) {
+      
+      element <- valr::read_bed(element, n_fields=6)[,1:6]
+      
+    } else {
+      
+      element <- valr::read_bed(element, n_fields=4)[,1:4]
+      
+    }
+    
+  } else if (is.data.frame(element)) {
+    
+    if (isTRUE(strand)) {
+      
+      element <- element[,1:6]
+      
+    } else {
+      
+      element <- element[,1:4]
+      
+    }
+    
+  } else if (class(element)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the element format")
+  }
+  
+  if (isTRUE(strand)) {
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name", "score", "strand")
+    
+  } else {
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name")
+    
+  }
+
+  ## observe result
+  observe <- FactorElementCorrelate(
+    factor = factor, element = element, strand = strand, tag = tag) %>%
+    CountCorrelation(intersect = intersect, condition = condition)
+
+  if (is.character(genome)) {
+
+    if (!file.exists(genome)) {
+      stop("Check the genome file exsist in path")
+    }
+
+    genome <- valr::read_genome(genome)
+
+  } else if (is.data.frame(genome)) {
+
+    genome <- genome[,1:2]
+
+  } else {
+    stop("Check the genome format")
+  }
+  
+  if (all(!is.null(incl), !is.null(excl))) {
+    
+    stop("Check the incl and excl, only could specify one")
+
+  } else if (!is.null(excl)) {
+
+    incl    <- data.frame(
+      chrom = data.frame(genome)[,1],
+      start = 0,
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+
+  }
+
+  if (isTRUE(parrallel)) {
+
+    expect <- BiocParallel::bplapply(1:random.n, function(x)
+      FactorShufCorrelate(
+        factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+        genome = genome, incl = incl, seed = x) %>% 
+      CountCorrelation(intersect = intersect, condition = condition))
+
+  } else {
+       
+    expect <- lapply(1:random.n, function(x)
+      FactorShufCorrelate(
+        factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+        genome = genome, incl = incl, seed = x) %>% 
+      CountCorrelation(intersect = intersect, condition = condition))
+
+  }
+
+  result <- list(observe = observe, expect = expect)
+  return(result)
 
 }
 # ObsExpObj <- function(
