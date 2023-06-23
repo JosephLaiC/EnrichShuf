@@ -1,3 +1,54 @@
+
+ObsExpSTAT <-  function(data, log.p=FALSE, parrallel=FALSE) {
+
+  if (!all(names(data)%in%c("observe", "expect"))) {
+    stop("Please assign the result from ObsExpObj")
+  }
+
+  observe <- data$observe
+  expect  <- data$expect
+
+  if (isTRUE(parrallel)) {
+
+    result <- BiocParallel::bplapply(names(observe), function(x) {
+      numbers <-  lapply(1:length(expect), function(y)
+        expect[[y]][x]) %>% unlist()
+      mean <-  mean(numbers)
+      sd   <-  sd(numbers)
+      data.frame(
+        condition = x,
+        observe   = observe[x],
+        expect    = mean,
+        log2FC    = log2(observe[x]/mean),
+        upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+        lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+    }) %>% Reduce(rbind, .)
+
+  } else {
+  
+    result <- lapply(names(observe), function(x) {
+      numbers <-  lapply(1:length(expect), function(y)
+        expect[[y]][x]) %>% unlist()
+      mean <-  mean(numbers)
+      sd   <-  sd(numbers)
+      data.frame(
+        condition = x,
+        observe   = observe[x],
+        expect    = mean,
+        log2FC    = log2(observe[x]/mean),
+        upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+        lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+    }) %>% Reduce(rbind, .)
+
+  }
+
+  return(result)
+
+}
+
+
+
+
 #' Transform the list of per shuffle with condition to per condition with shuffle
 #'
 #' @param list Input the characters of conditions (type column in correlation table)
