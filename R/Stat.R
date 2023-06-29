@@ -466,6 +466,8 @@ TargetFactorSTAT <- function(
 
   ## Calculate the statistic
   result <- data.frame(
+    observe      = observe.num,
+    expect       = mean(expect.num),
     log2FC       = log2(observe.num/mean(expect.num)),
     upper_pval   = pnorm(
       observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
