@@ -152,19 +152,19 @@ factorElementCor <- function(
   
 }
 
-ExpFactorElementCor <- function(
-  element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
-  seed=1, genome=genome, incl=NULL, excl=NULL) {
+# ExpFactorElementCor <- function(
+#   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
+#   seed=1, genome=genome, incl=NULL, excl=NULL) {
 
   
 
 
-}
+# }
 
 
 
-factorEnirchElement <- function(
-    element, factor=factor,)
+# factorEnirchElement <- function(
+#     element, factor=factor,)
 
 
 
