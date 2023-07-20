@@ -10,7 +10,7 @@ CountCorrelationByBin(
   bin = 1000,
   min = 0,
   max = 1e+06,
-  count.type = "continue"
+  count.type = "within"
 )
 }
 \arguments{
