@@ -423,10 +423,12 @@ randomFactor <- function(list, seed=1, n=NULL) {
 #' @param element A character vector of elements to be associated.
 #' @param random.num Number of random times to get expect result.
 #' @param log.p If TRUE, will log2 the p.value.
+#' @param parrallel If TRUE, will use parallel to calculate.
 #' 
 #' @export
 TargetFactorSTAT <- function(
-  factor, total=NULL, element=NULL, random.num=10000, log.p=FALSE) {
+  factor, total=NULL, element=NULL, random.num=10000, 
+  log.p=FALSE, parrallel=FALSE) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -461,8 +463,18 @@ TargetFactorSTAT <- function(
   observe.num <- sum(total.factor%in%element)
 
   ## Randomly select elements from total
-  expect.num <- lapply(1:random.num, function(x) 
-    sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+  if (isTRUE(parrallel)) {
+
+    expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
+      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  } else {
+
+    expect.num <- lapply(1:random.num, function(x) 
+      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  }
+
 
   ## Calculate the statistic
   result <- data.frame(
@@ -477,185 +489,125 @@ TargetFactorSTAT <- function(
   return(result)
 }
 
-
-
-
-#' Radomly select peaks from a GRanges object.
-#'
-#' @param grange GRanges object.
-#' @param seed Seed number.
-#' @param n Number of peaks to select.
-#' @param origin.n Number of peaks in grange.
+#' Associate two factors in elements and calculate the significance
 #' 
-#' @export
-randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
-
-  if (is.null(n)) {
-    stop("Please assign a number to n")
-  }
-
-  if (is.null(origin.n)) {
-    origin.n <- length(grange)
-  }
-
-  set.seed(seed)
-  return(grange[sample(origin.n, n, replace=FALSE)])
-
-}
-
-#' Calculate specific peak's enrichment factor by compare with random peaks.
-#' 
-#' @param subject.name A character vector of peak name.
-#' @param query A GRanges object of query peaks.
-#' @param factor A GRanges object of factor peaks.
+#' @param factorA A bed information of factorA.
+#' @param factorA.min Minimum distance of element to factorA.
+#' @param factorA.max Maximum distance of element to factorA
+#' @param factorB A bed information of factorB.
+#' @param factorB.min Minimum distance of element to factorB.
+#' @param factorB.max Maximum distance of element to factorB.
+#' @param element A bed information of elements.
 #' @param random.num Number of random times to get expect result.
-#' @param pval P-value cutoff.
-#' @param parallel If TRUE, will use parallel to calculate.
-#' @param peak.name The column name of peak name in query.
+#' @param log.p If TRUE, will log2 the p.value.
+#' @param parrallel If TRUE, will use parallel to calculate.
 #' 
 #' @export
-PeakFactorStat <- function(
-  subject.name, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
+twoFactorElementSTAT <- function(
+  factorA=NULL, factorA.min=0, factorA.max=0, factorB=NULL, factorB.min=0, factorB.max=0, 
+  element=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
 
-  if (!is.character(subject.name)) {
-    stop("Please assign a character to subject.name")
+  if (is.null(factorA)) {
+    stop("Please assign a character to factorA")
   }
 
-  if (!class(query)=="GRanges") {
-    stop("Please assign a GRanges object in query")
+  if (is.null(factorB)) {
+    stop("Please assign a character to factorB")
   }
 
-  if (!class(factor)=="GRanges") {
-    stop("Please assign a GRanges object in factor")
+  if (is.null(element)) {
+    stop("Please assign a character to element")
   }
 
-  if (!length(subject.name)==length(unique(subject.name))) {
-    stop("Please assign a unique subject.name")
+  ##  Check the number of min and max
+  if (!all(is.numeric(factorA.min), is.numeric(factorA.max), is.numeric(factorB.min), is.numeric(factorB.max))) {
+    stop("Please assign a number to factorA.min, factorA.max, factorB.min, factorB.max")
   }
 
-  idx <- which(data.frame(query)[,peak.name]%in%subject.name)
-
-  if (!length(idx)==length(subject.name)) {
-    stop("Please assign a valid subject.name")
+  if (all(factorA.min==0, factorA.max==0)) {
+    
+    factorA.intersect <- TRUE
+ 
   } else {
-    subject.n <- length(subject.name)
+
+    if (factorA.min > factorA.max) {
+      stop("factorA.min should be smaller than factorA.max")
+    }
+
   }
 
-  subject <- query[idx]
+  if (all(factorB.min==0, factorB.max==0)) {
 
-  observe <- GenomicRanges::findOverlaps(subject, factor) %>% 
-    { data.frame(.)[,1] } %>% unique() %>% length()
-
-  if (isTRUE(parallel)) {
-    expect <- BiocParallel::bplapply(1:random.num, function(x) 
-      randomPeak(query, seed=x, n=subject.n, origin.n=length(query)) %>% 
-        { GenomicRanges::findOverlaps(., factor) } %>% 
-        { data.frame(.)[,1] } %>% unique() %>% length()
-    ) %>% unlist()
-  } else {
-    expect <- lapply(1:random.num, function(x) 
-      randomPeak(query, seed=x, n=subject.n, origin.n=length(query)) %>% 
-        { GenomicRanges::findOverlaps(., factor) } %>% 
-        { data.frame(.)[,1] } %>% unique() %>% length()
-    ) %>% unlist()
-  }
+    factorB.intersect <- TRUE
   
-  expect.mean <- mean(expect)
-  expect.sd   <- sd(expect)
-
-  log2FC  <- log2(observe/expect.mean)
-  upper.p <- pnorm(observe, mean=expect.mean, sd=expect.sd, lower.tail=FALSE, log.p=TRUE)
-  lower.p <- pnorm(observe, mean=expect.mean, sd=expect.sd, lower.tail=TRUE , log.p=TRUE)
-
-  if (exp(lower.p) < pval) {
-    type <- "lower"
-  } else if (exp(upper.p) < pval) {
-    type <- "upper"
   } else {
-    type <- "none"
+
+    if (factorB.min > factorB.max) {
+      stop("factorB.min should be smaller than factorB.max")
+    }
+
   }
 
-  result <- list(
-    type    = type,
-    observe = observe,
-    expect  = expect,
-    log2FC  = log2FC,
-    upper.p = upper.p,
-    lower.p = lower.p)
+  if (is.character(element)) {
 
-  return(result)
+    if (file.exists(element)) {
+      element <- valr::read_bed(element)
+    } else {
+      stop("Please assign a valid file path")
+    }
+
+  } else {
+
+    if (!data.frame(element)) {
+      stop("Please check the input element")
+    }
+
+  }
+
+  element.list <- unique(element[,4])
+
+  element.factorA <- FactorElementCorrelate(
+    factor  = element, 
+    element = factorA, 
+    tag     = "A")
+
+  element.factorB <- FactorElementCorrelate(
+    factor  = element, 
+    element = factorB, 
+    tag     = "A")
+
+  if (isTRUE(factorA.intersect)) {
+
+    factorA.list <- unique(element.factorA[element.factorA[,4]==0,1])
+
+  } else {
+
+    factorA.list <- unique(element.factorA[
+      element.factorA[,4]>factorA.min & element.factorA[,4]<=factorA.max,1])
+
+  }
+
+  if (isTRUE(factorB.intersect)) {
+
+    factorB.list <- unique(element.factorB[element.factorB[,4]==0,1])
+
+  } else {
+
+    factorB.list <- unique(element.factorB[
+      element.factorB[,4]>factorB.min & element.factorB[,4]<=factorB.max,1])
+
+  }
+
+
+  result <- TargetFactorSTAT(
+    factor     = factorA.list, 
+    total      = element.list, 
+    element    = factorB.list, 
+    random.num = random.num, 
+    log.p      = log.p, 
+    parrallel  = parrallel)
 
 }
 
 
-# foreach(i=1:random.num, .combine="c") %dopar% {
-#       randomPeak(subject, seed=i, n=observe) %>% 
-#         GenomicRanges::findOverlaps(., factor) %>% 
-#         { data.frame(.)[,1] } %>% unique() %>% length()
-
-
-#' Calculate specific peak's (intersect with subject) enrichment factor by compare with random peaks.
-#' 
-#' @param subject A GRanges object of subject peaks.
-#' @param query A GRanges object of query peaks.
-#' @param factor A GRanges object of factor peaks.
-#' @param random.num Number of random times to get expect result.
-#' @param pval P-value cutoff.
-#' @param parallel If TRUE, will use parallel to calculate.
-#' @param peak.name The column name of peak name in query.
-#' 
-#' @export
-PeaktoPeakIntersect <- function(
-  subject, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
-
-  if (is.character(subject)) {
-    if (file.exists(subject)) {
-      message("Read subject from file")
-      subject <- bedfromfile(subject)
-    } else {
-      stop("Please assign a valid file path")
-    }
-  }
-
-  if (is.character(query)) {
-    if (file.exists(query)) {
-      message("Read query from file")
-      query <- bedfromfile(query)
-    } else {
-      stop("Please assign a valid file path")
-    }
-  }
-
-  if (is.character(factor)) {
-    if (file.exists(factor)) {
-      message("Read factor from file")
-      factor <- bedfromfile(factor)
-    } else {
-      stop("Please assign a valid file path")
-    }
-  }
-
-  if (!class(subject)=="GRanges") {
-    stop("Please assign a GRanges object in subject")
-  }
-
-  if (!class(query)=="GRanges") {
-    stop("Please assign a GRanges object in query")
-  }
-
-  if (!class(factor)=="GRanges") {
-    stop("Please assign a GRanges object in factor")
-  }
-
-  ## Intersect the query to subject and get the number of intersected peaks
-  subject.name <- GenomicRanges::findOverlaps(query, subject) %>% 
-    { data.frame(.)[,1] } %>%
-    unique() %>% { data.frame(query)[,peak.name][.] }
-
-  result <- PeakFactorStat(
-    subject.name=subject.name, query=query, factor=factor, 
-    random.num=random.num, pval=pval, parallel=parallel, peak.name=peak.name)
-  
-  return(result)
-}
 

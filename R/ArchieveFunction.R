@@ -209,3 +209,185 @@ RegionAnnoFromData <- function(
   return(TABLE)
 
 }
+
+
+
+#' Radomly select peaks from a GRanges object.
+#'
+#' @param grange GRanges object.
+#' @param seed Seed number.
+#' @param n Number of peaks to select.
+#' @param origin.n Number of peaks in grange.
+#' 
+#' @export
+randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
+
+  if (is.null(n)) {
+    stop("Please assign a number to n")
+  }
+
+  if (is.null(origin.n)) {
+    origin.n <- length(grange)
+  }
+
+  set.seed(seed)
+  return(grange[sample(origin.n, n, replace=FALSE)])
+
+}
+
+#' Calculate specific peak's enrichment factor by compare with random peaks.
+#' 
+#' @param subject.name A character vector of peak name.
+#' @param query A GRanges object of query peaks.
+#' @param factor A GRanges object of factor peaks.
+#' @param random.num Number of random times to get expect result.
+#' @param pval P-value cutoff.
+#' @param parallel If TRUE, will use parallel to calculate.
+#' @param peak.name The column name of peak name in query.
+#' 
+#' @export
+PeakFactorStat <- function(
+  subject.name, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
+
+  if (!is.character(subject.name)) {
+    stop("Please assign a character to subject.name")
+  }
+
+  if (!class(query)=="GRanges") {
+    stop("Please assign a GRanges object in query")
+  }
+
+  if (!class(factor)=="GRanges") {
+    stop("Please assign a GRanges object in factor")
+  }
+
+  if (!length(subject.name)==length(unique(subject.name))) {
+    stop("Please assign a unique subject.name")
+  }
+
+  idx <- which(data.frame(query)[,peak.name]%in%subject.name)
+
+  if (!length(idx)==length(subject.name)) {
+    stop("Please assign a valid subject.name")
+  } else {
+    subject.n <- length(subject.name)
+  }
+
+  subject <- query[idx]
+
+  observe <- GenomicRanges::findOverlaps(subject, factor) %>% 
+    { data.frame(.)[,1] } %>% unique() %>% length()
+
+  if (isTRUE(parallel)) {
+    expect <- BiocParallel::bplapply(1:random.num, function(x) 
+      randomPeak(query, seed=x, n=subject.n, origin.n=length(query)) %>% 
+        { GenomicRanges::findOverlaps(., factor) } %>% 
+        { data.frame(.)[,1] } %>% unique() %>% length()
+    ) %>% unlist()
+  } else {
+    expect <- lapply(1:random.num, function(x) 
+      randomPeak(query, seed=x, n=subject.n, origin.n=length(query)) %>% 
+        { GenomicRanges::findOverlaps(., factor) } %>% 
+        { data.frame(.)[,1] } %>% unique() %>% length()
+    ) %>% unlist()
+  }
+  
+  expect.mean <- mean(expect)
+  expect.sd   <- sd(expect)
+
+  log2FC  <- log2(observe/expect.mean)
+  upper.p <- pnorm(observe, mean=expect.mean, sd=expect.sd, lower.tail=FALSE, log.p=TRUE)
+  lower.p <- pnorm(observe, mean=expect.mean, sd=expect.sd, lower.tail=TRUE , log.p=TRUE)
+
+  if (exp(lower.p) < pval) {
+    type <- "lower"
+  } else if (exp(upper.p) < pval) {
+    type <- "upper"
+  } else {
+    type <- "none"
+  }
+
+  result <- list(
+    type    = type,
+    observe = observe,
+    expect  = expect,
+    log2FC  = log2FC,
+    upper.p = upper.p,
+    lower.p = lower.p)
+
+  return(result)
+
+}
+
+
+# foreach(i=1:random.num, .combine="c") %dopar% {
+#       randomPeak(subject, seed=i, n=observe) %>% 
+#         GenomicRanges::findOverlaps(., factor) %>% 
+#         { data.frame(.)[,1] } %>% unique() %>% length()
+
+
+#' Calculate specific peak's (intersect with subject) enrichment factor by compare with random peaks.
+#' 
+#' @param subject A GRanges object of subject peaks.
+#' @param query A GRanges object of query peaks.
+#' @param factor A GRanges object of factor peaks.
+#' @param random.num Number of random times to get expect result.
+#' @param pval P-value cutoff.
+#' @param parallel If TRUE, will use parallel to calculate.
+#' @param peak.name The column name of peak name in query.
+#' 
+#' @export
+PeaktoPeakIntersect <- function(
+  subject, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
+
+  if (is.character(subject)) {
+    if (file.exists(subject)) {
+      message("Read subject from file")
+      subject <- bedfromfile(subject)
+    } else {
+      stop("Please assign a valid file path")
+    }
+  }
+
+  if (is.character(query)) {
+    if (file.exists(query)) {
+      message("Read query from file")
+      query <- bedfromfile(query)
+    } else {
+      stop("Please assign a valid file path")
+    }
+  }
+
+  if (is.character(factor)) {
+    if (file.exists(factor)) {
+      message("Read factor from file")
+      factor <- bedfromfile(factor)
+    } else {
+      stop("Please assign a valid file path")
+    }
+  }
+
+  if (!class(subject)=="GRanges") {
+    stop("Please assign a GRanges object in subject")
+  }
+
+  if (!class(query)=="GRanges") {
+    stop("Please assign a GRanges object in query")
+  }
+
+  if (!class(factor)=="GRanges") {
+    stop("Please assign a GRanges object in factor")
+  }
+
+  ## Intersect the query to subject and get the number of intersected peaks
+  subject.name <- GenomicRanges::findOverlaps(query, subject) %>% 
+    { data.frame(.)[,1] } %>%
+    unique() %>% { data.frame(query)[,peak.name][.] }
+
+  result <- PeakFactorStat(
+    subject.name=subject.name, query=query, factor=factor, 
+    random.num=random.num, pval=pval, parallel=parallel, peak.name=peak.name)
+  
+  return(result)
+}
+
