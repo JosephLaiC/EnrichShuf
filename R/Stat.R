@@ -564,7 +564,7 @@ twoFactorElementSTAT <- function(
 
   }
 
-  element.list <- unique(element[,4])
+  element.list <- unique(data.frame(element)[,4])
 
   element.factorA <- FactorElementCorrelate(
     factor  = element, 
