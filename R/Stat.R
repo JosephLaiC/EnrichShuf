@@ -505,7 +505,7 @@ TargetFactorSTAT <- function(
 #' @export
 twoFactorElementSTAT <- function(
   factorA=NULL, factorA.min=0, factorA.max=0, factorB=NULL, factorB.min=0, factorB.max=0, 
-  element=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
+  element=NULL, random.num=10000, log.p=FALSE, parrallel=FALSE) {
 
   if (is.null(factorA)) {
     stop("Please assign a character to factorA")
