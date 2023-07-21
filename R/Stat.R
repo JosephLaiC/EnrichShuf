@@ -558,7 +558,7 @@ twoFactorElementSTAT <- function(
 
   } else {
 
-    if (!data.frame(element)) {
+    if (!is.data.frame(element)) {
       stop("Please check the input element")
     }
 
