@@ -465,6 +465,7 @@ TargetFactorSTAT <- function(
   ## Randomly select elements from total
   if (isTRUE(parrallel)) {
 
+    gc(verbose=FALSE)
     expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
       sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
 
@@ -488,6 +489,88 @@ TargetFactorSTAT <- function(
 
   return(result)
 }
+
+
+FactorElementSTAT <- function(
+  factor=NULL, factor.min=0, factor.max=0, 
+  element=NULL, name.list=NULL, random.num=10000, log.p=FALSE, parrallel=FALSE) {
+
+  if (is.null(factor)) {
+    stop("Please assign a character to factor")
+  }
+
+
+  if (is.null(element)) {
+    stop("Please assign a character to element")
+  }
+
+  ##  Check the number of min and max
+  if (!all(is.numeric(factor.min), is.numeric(factor.max))) {
+    stop("Please assign a number to factorA.min, factorA.max, factorB.min, factorB.max")
+  }
+
+  if (all(factor.min==0, factor.max==0)) {
+    
+    factor.intersect <- TRUE
+ 
+  } else {
+
+    if (factor.min > factor.max) {
+      stop("factorA.min should be smaller than factorA.max")
+    } 
+
+    factor.intersect <- FALSE
+
+  }
+
+  if (is.character(element)) {
+
+    if (file.exists(element)) {
+      element <- valr::read_bed(element)
+    } else {
+      stop("Please assign a valid file path")
+    }
+
+  } else {
+
+    if (!is.data.frame(element)) {
+      stop("Please check the input element")
+    }
+
+  }
+
+  element.list <- unique(data.frame(element)[,4])
+
+  element.factor <- FactorElementCorrelate(
+    factor  = element, 
+    element = factor, 
+    tag     = "A")
+
+  if (isTRUE(factor.intersect)) {
+
+    factor.list <- unique(element.factor[element.factor[,4]==0,1])
+
+  } else {
+
+    factor.list <- unique(element.factor[
+      element.factor[,4]>factor.min & element.factor[,4]<=factor.max,1])
+
+  }
+
+  result <- TargetFactorSTAT(
+    factor     = factor.list, 
+    total      = element.list, 
+    element    = name.list, 
+    random.num = random.num, 
+    log.p      = log.p, 
+    parrallel  = parrallel)
+
+  return(result)
+
+}
+
+
+
 
 #' Associate two factors in elements and calculate the significance
 #' 
