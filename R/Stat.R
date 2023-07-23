@@ -532,7 +532,9 @@ twoFactorElementSTAT <- function(
 
     if (factorA.min > factorA.max) {
       stop("factorA.min should be smaller than factorA.max")
-    }
+    } 
+
+    factorA.intersect <- FALSE
 
   }
 
@@ -545,6 +547,8 @@ twoFactorElementSTAT <- function(
     if (factorB.min > factorB.max) {
       stop("factorB.min should be smaller than factorB.max")
     }
+
+    factorB.intersect <- FALSE
 
   }
 
