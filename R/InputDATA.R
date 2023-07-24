@@ -437,8 +437,8 @@ CountCorrelationByBin <- function(
 #' @param random.n Times of shuffle.
 #' @param intersect If assign as TRUE, result will contained intersect number.
 #' @param condition Range of distance to nearest factor. Two number saperate by "-".
-#' @param parrallel If assign number > 1, the function will run in parallel
-#' @param parrallel.type Could be specify one of: \cr
+#' @param parallel If assign number > 1, the function will run in parallel
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
 #' "mclapply" - Use mclapply to run in parallel\cr
 #' \cr
@@ -449,7 +449,7 @@ ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
   condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
-  parrallel=1, parrallel.type="mclapply") {
+  parallel=1, parallel.type="mclapply") {
 
   if (is.character(factor)) {
     
@@ -554,7 +554,7 @@ ObsExpObj <- function(
 
   }
 
-  if (parrallel==1) {
+  if (parallell==1) {
 
     expect <- lapply(1:random.n, function(x)
       FactorShufCorrelate(
@@ -562,22 +562,22 @@ ObsExpObj <- function(
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
 
-  } else if (parrallel>1) {
+  } else if (parallel>1) {
     
     gc(verbose = FALSE)
 
-    if (parrallel.type=="mclapply") {
+    if (parallel.type=="mclapply") {
 
       expect <- parallel::mclapply(1:random.n, function(x) {
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
         CountCorrelation(intersect = intersect, condition = condition)
-      } ,mc.cores = parrallel)
+      } ,mc.cores = parallel)
 
-    } else if (parrallel.type=="bplapply") {
+    } else if (parallel.type=="bplapply") {
 
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parrallel))
+      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
       expect <- BiocParallel::bplapply(1:random.n, function(x) {
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
@@ -592,7 +592,7 @@ ObsExpObj <- function(
 
   } else {
 
-    stop("Check the parrallel parameter must be numeric")
+    stop("Check the parallel parameter must be numeric")
   
   }
 
@@ -623,7 +623,7 @@ ObsExpObj <- function(
 #' \cr
 #' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
 #' @param parallel If assign number > 1, the function will run in parallel
-#' @param parrallel.type Could be specify one of: \cr
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
 #' "mclapply" - Use mclapply to run in parallel\cr
 #' \cr
@@ -633,13 +633,13 @@ ObsExpObj <- function(
 ObsExpObjEachBin <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  bin=1000, min=0, max=1000000, count.type="within", parrallel=FALSE, parrallel.type="mclapply") {
+  bin=1000, min=0, max=1000000, count.type="within", parallel=FALSE, parallel.type="mclapply") {
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parrallel=1, parrallel.type=parrallel.type)
+    condition=condition, parallel=1, parallel.type=pparallel.type)
   return(result)
 
 }
