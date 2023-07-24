@@ -633,13 +633,13 @@ ObsExpObj <- function(
 ObsExpObjEachBin <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  bin=1000, min=0, max=1000000, count.type="within", parrallel=FALSE) {
+  bin=1000, min=0, max=1000000, count.type="within", parrallel=FALSE, parrallel.type="mclapply") {
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parrallel=1, parrallel.type="mclapply")
+    condition=condition, parrallel=1, parrallel.type=parrallel.type)
   return(result)
 
 }
