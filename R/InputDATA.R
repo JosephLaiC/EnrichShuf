@@ -639,7 +639,7 @@ ObsExpObjEachBin <- function(
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parallel=1, parallel.type=parallel.type)
+    condition=condition, parallel=parallel, parallel.type=parallel.type)
   return(result)
 
 }
