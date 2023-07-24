@@ -16,7 +16,8 @@ ObsExpObj(
   random.n = 10000,
   intersect = TRUE,
   condition = c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
-  parrallel = FALSE
+  parrallel = 1,
+  parrallel.type = "mclapply"
 )
 }
 \arguments{
@@ -41,6 +42,14 @@ ObsExpObj(
 \item{intersect}{If assign as TRUE, result will contained intersect number.}
 
 \item{condition}{Range of distance to nearest factor. Two number saperate by "-".}
+
+\item{parrallel}{If assign number > 1, the function will run in parallel}
+
+\item{parrallel.type}{Could be specify one of: \cr
+\cr
+"mclapply" - Use mclapply to run in parallel\cr
+\cr
+"bplapply" - Use BiocParallel to run in parallel}
 }
 \description{
 Create the object contained the information of observe and expect.

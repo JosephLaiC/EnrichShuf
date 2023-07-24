@@ -1,31 +1,33 @@
 
-ObsExpSTAT <-  function(data, log.p=FALSE, parrallel=FALSE) {
+
+#' Calculate the p-value of observed number of peaks in the expect distribution
+#' 
+#' @param data The input data contained the information of expect distribution or observe number.
+#' @param log.p If TRUE, the log of p-value will be returned.
+#' @param parrallel If assign number > 1, the function will run in parallel
+#' @param parrallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel 
+#' 
+#' @export
+ObsExpSTAT <-  function(
+  data, log.p=FALSE, parrallel=1, parrallel.type="mclapply") {
 
   if (!all(names(data)%in%c("observe", "expect"))) {
     stop("Please assign the result from ObsExpObj")
   }
 
+  if (!is.numeric(parrallel)) {
+    stop("Please assign the number of cores to run the process")
+  }
+
   observe <- data$observe
   expect  <- data$expect
 
-  if (isTRUE(parrallel)) {
-
-    result <- BiocParallel::bplapply(names(observe), function(x) {
-      numbers <-  lapply(1:length(expect), function(y)
-        expect[[y]][x]) %>% unlist()
-      mean <-  mean(numbers)
-      sd   <-  sd(numbers)
-      data.frame(
-        condition = x,
-        observe   = observe[x],
-        expect    = mean,
-        log2FC    = log2(observe[x]/mean),
-        upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-        lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
-    }) %>% Reduce(rbind, .)
-
-  } else {
-  
+  if (parrallel==1) {
+    
     result <- lapply(names(observe), function(x) {
       numbers <-  lapply(1:length(expect), function(y)
         expect[[y]][x]) %>% unlist()
@@ -39,8 +41,82 @@ ObsExpSTAT <-  function(data, log.p=FALSE, parrallel=FALSE) {
         upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
         lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
     }) %>% Reduce(rbind, .)
+  
+  } else if (parrallel > 1) {
 
+    if (parrallel.type=="mclapply") {
+
+      result <- parallel::mclapply(names(observe), function(x) {
+        numbers <-  lapply(1:length(expect), function(y)
+          expect[[y]][x]) %>% unlist()
+        mean <-  mean(numbers)
+        sd   <-  sd(numbers)
+        data.frame(
+          condition = x,
+          observe   = observe[x],
+          expect    = mean,
+          log2FC    = log2(observe[x]/mean),
+          upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+          lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+      }, mc.cores=parrallel) %>% Reduce(rbind, .)
+
+    } else if (parrallel.type=="bplapply") {
+
+      result <- BiocParallel::bplapply(names(observe), function(x) {
+        numbers <-  lapply(1:length(expect), function(y)
+          expect[[y]][x]) %>% unlist()
+        mean <-  mean(numbers)
+        sd   <-  sd(numbers)
+        data.frame(
+          condition = x,
+          observe   = observe[x],
+          expect    = mean,
+          log2FC    = log2(observe[x]/mean),
+          upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+          lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+      }) %>% Reduce(rbind, .)
+
+    } else {
+      stop("Please assign parrallel.type as mclapply or bplapply")
+    }
+
+  } else {
+    stop("Please assign the number over 1 of cores to run the process")
   }
+
+  # if (isTRUE(parrallel)) {
+
+  #   result <- BiocParallel::bplapply(names(observe), function(x) {
+  #     numbers <-  lapply(1:length(expect), function(y)
+  #       expect[[y]][x]) %>% unlist()
+  #     mean <-  mean(numbers)
+  #     sd   <-  sd(numbers)
+  #     data.frame(
+  #       condition = x,
+  #       observe   = observe[x],
+  #       expect    = mean,
+  #       log2FC    = log2(observe[x]/mean),
+  #       upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+  #       lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+  #   }) %>% Reduce(rbind, .)
+
+  # } else {
+  
+  #   result <- lapply(names(observe), function(x) {
+  #     numbers <-  lapply(1:length(expect), function(y)
+  #       expect[[y]][x]) %>% unlist()
+  #     mean <-  mean(numbers)
+  #     sd   <-  sd(numbers)
+  #     data.frame(
+  #       condition = x,
+  #       observe   = observe[x],
+  #       expect    = mean,
+  #       log2FC    = log2(observe[x]/mean),
+  #       upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+  #       lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+  #   }) %>% Reduce(rbind, .)
+
+  # }
 
   return(result)
 

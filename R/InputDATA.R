@@ -622,7 +622,12 @@ ObsExpObj <- function(
 #' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
 #' \cr
 #' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
-#' @param parallel If assign TRUE, the function will run in parallel
+#' @param parallel If assign number > 1, the function will run in parallel
+#' @param parrallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel 
 #' 
 #' @export
 ObsExpObjEachBin <- function(
@@ -634,7 +639,7 @@ ObsExpObjEachBin <- function(
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parrallel=parrallel)
+    condition=condition, parrallel=1, parrallel.type="mclapply")
   return(result)
 
 }

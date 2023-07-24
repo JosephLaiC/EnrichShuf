@@ -14,7 +14,7 @@ twoFactorElementSTAT(
   element = NULL,
   random.num = 10000,
   log.p = FALSE,
-  parallel = FALSE
+  parrallel = FALSE
 )
 }
 \arguments{
