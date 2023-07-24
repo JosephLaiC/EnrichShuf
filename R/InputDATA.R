@@ -554,7 +554,7 @@ ObsExpObj <- function(
 
   }
 
-  if (parallell==1) {
+  if (parallel==1) {
 
     expect <- lapply(1:random.n, function(x)
       FactorShufCorrelate(
@@ -639,7 +639,7 @@ ObsExpObjEachBin <- function(
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parallel=1, parallel.type=pparallel.type)
+    condition=condition, parallel=1, parallel.type=parallel.type)
   return(result)
 
 }
