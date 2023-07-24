@@ -19,7 +19,8 @@ ObsExpObjEachBin(
   min = 0,
   max = 1e+06,
   count.type = "within",
-  parrallel = FALSE
+  parrallel = FALSE,
+  parrallel.type = "mclapply"
 )
 }
 \arguments{
@@ -55,13 +56,13 @@ ObsExpObjEachBin(
 \cr
 "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
 
-\item{parallel}{If assign number > 1, the function will run in parallel}
-
 \item{parrallel.type}{Could be specify one of: \cr
 \cr
 "mclapply" - Use mclapply to run in parallel\cr
 \cr
 "bplapply" - Use BiocParallel to run in parallel}
+
+\item{parallel}{If assign number > 1, the function will run in parallel}
 }
 \description{
 Create the object contained the information of observe and expect by each bin.
