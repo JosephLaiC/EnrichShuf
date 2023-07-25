@@ -86,16 +86,16 @@ FactorElementCorrelate <- function(
     ,c("factor_name.x", "element_name.y", ".dist", ".overlap")] %>% data.frame()
   colnames(table) <- c("factor_name", "element_name", "distance", "overlap")
   
-  intersect <- table[table$distance==0,] %>% 
+  intersect <- table[which(table$distance==0),] %>% 
     { .[order(.$overlap, decreasing=TRUE),] }
   
   multi.overlap <- table(intersect$factor_name) %>% 
-    { .[.>1] } %>% names()
+    { .[which(.>1)] } %>% names()
   
   if (length(multi.overlap) > 0) {
     
     multi.info <- lapply(multi.overlap, function(x) 
-      intersect[intersect$factor_name==x,] %>% { .[1,] }) %>%
+      intersect[which(intersect$factor_name==x),] %>% { .[1,] }) %>%
       Reduce(rbind, .)
     
     intersect.info <- rbind(
@@ -109,12 +109,12 @@ FactorElementCorrelate <- function(
   
   associate <- table[!table$factor_name%in%intersect.info$factor_name,]
   multi.associate <- table(associate$factor_name) %>% 
-    { .[.>1] } %>% names()
+    { .[which(.>1)] } %>% names()
   
   if (length(multi.associate) > 0) {
     
     multi.info <- lapply(multi.associate, function(x) 
-      associate[associate$factor_name==x,] %>% { .[1,] }) %>%
+      associate[which(associate$factor_name==x),] %>% { .[1,] }) %>%
       Reduce(rbind, .)
     
     associate.info <- rbind(
@@ -138,26 +138,26 @@ FactorElementCorrelate <- function(
       stop("Check the element strand information")
     }
     
-    forward <- element[element$strand=="+","element_name"] %>%
+    forward <- element[which(element$strand=="+"),"element_name"] %>%
       { result[result$element_name%in%.,] }
-    reverse <- element[element$strand=="+","element_name"] %>%
+    reverse <- element[which(element$strand=="+"),"element_name"] %>%
       { result[result$element_name%in%.,] }
     
-    forward[forward$distance==0,"annotation"] <- "overlap"
-    forward[forward$distance <0,"annotation"] <- "upstream"
-    forward[forward$distance >0,"annotation"] <- "downstream"  
+    forward[which(forward$distance==0),"annotation"] <- "overlap"
+    forward[which(forward$distance <0),"annotation"] <- "upstream"
+    forward[which(forward$distance >0),"annotation"] <- "downstream"  
     
-    reverse[reverse$distance==0,"annotation"] <- "overlap"
-    reverse[reverse$distance <0,"annotation"] <- "downstream"
-    reverse[reverse$distance >0,"annotation"] <- "upstream" 
+    reverse[which(reverse$distance==0),"annotation"] <- "overlap"
+    reverse[which(reverse$distance <0),"annotation"] <- "downstream"
+    reverse[which(reverse$distance >0),"annotation"] <- "upstream" 
     
     result <- rbind(forward, reverse)
     
   } else {
     
-    result[result$distance==0,"annotation"] <- "overlap"
-    result[result$distance <0,"annotation"] <- "upstream"
-    result[result$distance >0,"annotation"] <- "downstream" 
+    result[which(result$distance==0),"annotation"] <- "overlap"
+    result[which(result$distance <0),"annotation"] <- "upstream"
+    result[which(result$distance >0),"annotation"] <- "downstream" 
     
   }
   
