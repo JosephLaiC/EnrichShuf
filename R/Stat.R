@@ -499,12 +499,12 @@ randomFactor <- function(list, seed=1, n=NULL) {
 #' @param element A character vector of elements to be associated.
 #' @param random.num Number of random times to get expect result.
 #' @param log.p If TRUE, will log2 the p.value.
-#' @param parrallel If TRUE, will use parallel to calculate.
+#' @param parallel If TRUE, will use parallel to calculate.
 #' 
 #' @export
 TargetFactorSTAT <- function(
   factor, total=NULL, element=NULL, random.num=10000, 
-  log.p=FALSE, parrallel=FALSE) {
+  log.p=FALSE, parallel=1) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -539,7 +539,35 @@ TargetFactorSTAT <- function(
   observe.num <- sum(total.factor%in%element)
 
   ## Randomly select elements from total
-  if (isTRUE(parrallel)) {
+  if (parallel==1) {
+
+    expect.num <- lapply(1:random.num, function(x) 
+      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+
+  } else if (parallel > 1) {
+
+    if (parallel.type=="mclapply") {
+
+      expect.num <- parallel::mclapply(1:random.num, function(x) 
+        sum(randomFactor(
+          total, seed=x, n=total.factor.num)%in%element), mc.cores=parallel) %>% unlist()
+
+    } else if (parallel.type=="bplapply") {
+
+      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+      expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
+        sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+      BiocParallel::register(BiocParallel::SerialParam())
+
+    } else {
+      stop("Please assign parrallel.type as mclapply or bplapply")
+    }
+
+  } else {
+    stop("Please assign the number over 1 of cores to run the process")
+  }
+
+  if (isTRUE(parallel)) {
 
     gc(verbose=FALSE)
     expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
