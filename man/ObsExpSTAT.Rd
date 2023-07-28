@@ -4,16 +4,16 @@
 \alias{ObsExpSTAT}
 \title{Calculate the p-value of observed number of peaks in the expect distribution}
 \usage{
-ObsExpSTAT(data, log.p = FALSE, parrallel = 1, parrallel.type = "mclapply")
+ObsExpSTAT(data, log.p = FALSE, parallel = 1, parallel.type = "mclapply")
 }
 \arguments{
 \item{data}{The input data contained the information of expect distribution or observe number.}
 
 \item{log.p}{If TRUE, the log of p-value will be returned.}
 
-\item{parrallel}{If assign number > 1, the function will run in parallel}
+\item{parallel}{If assign number > 1, the function will run in parallel}
 
-\item{parrallel.type}{Could be specify one of: \cr
+\item{parallel.type}{Could be specify one of: \cr
 \cr
 "mclapply" - Use mclapply to run in parallel\cr
 \cr
