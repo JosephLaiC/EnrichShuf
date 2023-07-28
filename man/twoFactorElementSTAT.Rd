@@ -14,7 +14,8 @@ twoFactorElementSTAT(
   element = NULL,
   random.num = 10000,
   log.p = FALSE,
-  parrallel = FALSE
+  parallel = 1,
+  parallel.type = "mclapply"
 )
 }
 \arguments{
@@ -36,7 +37,7 @@ twoFactorElementSTAT(
 
 \item{log.p}{If TRUE, will log2 the p.value.}
 
-\item{parrallel}{If TRUE, will use parallel to calculate.}
+\item{parallel}{If TRUE, will use parallel to calculate.}
 }
 \description{
 Associate two factors in elements and calculate the significance

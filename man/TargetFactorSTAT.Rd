@@ -10,7 +10,8 @@ TargetFactorSTAT(
   element = NULL,
   random.num = 10000,
   log.p = FALSE,
-  parrallel = FALSE
+  parallel = 1,
+  parallel.type = "mclapply"
 )
 }
 \arguments{
@@ -24,7 +25,13 @@ TargetFactorSTAT(
 
 \item{log.p}{If TRUE, will log2 the p.value.}
 
-\item{parrallel}{If TRUE, will use parallel to calculate.}
+\item{parallel}{If TRUE, will use parallel to calculate.}
+
+\item{parallel.type}{Could be specify one of: \cr
+\cr
+"mclapply" - Use mclapply to run in parallel\cr
+\cr
+"bplapply" - Use BiocParallel to run in parallel}
 }
 \description{
 Associate factors to elements in a total list and calculate the significance
