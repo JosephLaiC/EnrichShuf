@@ -4,8 +4,8 @@
 #' 
 #' @param data The input data contained the information of expect distribution or observe number.
 #' @param log.p If TRUE, the log of p-value will be returned.
-#' @param parrallel If assign number > 1, the function will run in parallel
-#' @param parrallel.type  Could be specify one of: \cr
+#' @param parallel If assign number > 1, the function will run in parallel
+#' @param parallel.type  Could be specify one of: \cr
 #' \cr
 #' "mclapply" - Use mclapply to run in parallel\cr
 #' \cr
@@ -13,20 +13,20 @@
 #' 
 #' @export
 ObsExpSTAT <-  function(
-  data, log.p=FALSE, parrallel=1, parrallel.type="mclapply") {
+  data, log.p=FALSE, parallel=1, parallel.type="mclapply") {
 
   if (!all(names(data)%in%c("observe", "expect"))) {
     stop("Please assign the result from ObsExpObj")
   }
 
-  if (!is.numeric(parrallel)) {
+  if (!is.numeric(parallel)) {
     stop("Please assign the number of cores to run the process")
   }
 
   observe <- data$observe
   expect  <- data$expect
 
-  if (parrallel==1) {
+  if (parallel==1) {
     
     result <- lapply(names(observe), function(x) {
       numbers <-  lapply(1:length(expect), function(y)
@@ -42,9 +42,9 @@ ObsExpSTAT <-  function(
         lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
     }) %>% Reduce(rbind, .)
   
-  } else if (parrallel > 1) {
+  } else if (parallel > 1) {
 
-    if (parrallel.type=="mclapply") {
+    if (parallel.type=="mclapply") {
 
       result <- parallel::mclapply(names(observe), function(x) {
         numbers <-  lapply(1:length(expect), function(y)
@@ -58,9 +58,9 @@ ObsExpSTAT <-  function(
           log2FC    = log2(observe[x]/mean),
           upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
           lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
-      }, mc.cores=parrallel) %>% Reduce(rbind, .)
+      }, mc.cores=parallel) %>% Reduce(rbind, .)
 
-    } else if (parrallel.type=="bplapply") {
+    } else if (parallel.type=="bplapply") {
 
       result <- BiocParallel::bplapply(names(observe), function(x) {
         numbers <-  lapply(1:length(expect), function(y)
@@ -77,14 +77,14 @@ ObsExpSTAT <-  function(
       }) %>% Reduce(rbind, .)
 
     } else {
-      stop("Please assign parrallel.type as mclapply or bplapply")
+      stop("Please assign parallel.type as mclapply or bplapply")
     }
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
   }
 
-  # if (isTRUE(parrallel)) {
+  # if (isTRUE(parallel)) {
 
   #   result <- BiocParallel::bplapply(names(observe), function(x) {
   #     numbers <-  lapply(1:length(expect), function(y)
@@ -217,7 +217,7 @@ TargetFactorSTAT <- function(
       BiocParallel::register(BiocParallel::SerialParam())
 
     } else {
-      stop("Please assign parrallel.type as mclapply or bplapply")
+      stop("Please assign parallel.type as mclapply or bplapply")
     }
 
   } else {

@@ -597,6 +597,21 @@ ObsExpObj <- function(
   }
 
   result <- list(observe = observe, expect = expect)
+
+  if (!is.null(outloc)) {
+
+    if (tools::file_ext(outloc)=="gz") {
+
+      saveRDS(result, outloc, compress="gzip")
+
+    } else {
+
+      saveRDS(result, outloc)
+
+    }
+
+  }
+
   return(result)
 
 }
