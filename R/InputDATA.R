@@ -301,6 +301,90 @@ FactorShufCorrelate <- function(
 
 }
 
+#' Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.
+#' 
+#' @param factor input the factor data.frame or the path to bed file.
+#' @param element input the element data.frame or the path to bed file.
+#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
+#' @param tag if assign as TRUE means output the tag information in the analysis.
+#' @param outloc The location of output file.
+#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
+#' @param incl The interval information contained included regions.
+#' @param excl The interval information contained excluded regions.
+#' @param seed The seed number for shuffle.
+#' 
+#' @export 
+FactorShufCorrelate_new <- function(
+  factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
+  genome=genome, incl=NULL, excl=NULL, seed=1) {
+
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
+    }
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the factor format")
+  }
+  
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
+
+  if (is.character(genome)) {
+
+    if (!file.exists(genome)) {
+      stop("Check the genome file exsist in path")
+    }
+
+    genome <- valr::read_genome(genome)
+
+  } else if (is.data.frame(genome)) {
+
+    genome <- genome[,1:2]
+
+  } else {
+    stop("Check the genome format")
+  }
+
+  if (all(!is.null(incl), !is.null(excl))) {
+    
+    stop("Check the incl and excl, only could specify one")
+
+  } else if (!is.null(excl)) {
+
+    incl    <- data.frame(
+      chrom = data.frame(genome)[,1],
+      start = 0,
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else if (!is.null(incl)) {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed)
+
+  }
+
+  result <- FactorElementCorrelate(
+    element, element=shuffle, strand=strand, tag=tag, outloc=outloc)
+  return(result)
+
+}
+
+
 #' Input the correlated (annotation) data
 #'
 #' Input the correlated (annotation) data and count the number of each condition. (e.g. intersect or with specific distances)
@@ -522,7 +606,7 @@ ObsExpObj <- function(
 
   ## observe result
   observe <- FactorElementCorrelate(
-    factor = factor, element = element, strand = strand, tag = tag) %>%
+    factor = element, element = factor, strand = strand, tag = tag) %>%
     CountCorrelation(intersect = intersect, condition = condition)
 
   if (is.character(genome)) {
@@ -557,7 +641,7 @@ ObsExpObj <- function(
   if (parallel==1) {
 
     expect <- lapply(1:random.n, function(x)
-      FactorShufCorrelate(
+      FactorShufCorrelate_new(
         factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
@@ -569,7 +653,7 @@ ObsExpObj <- function(
     if (parallel.type=="mclapply") {
 
       expect <- parallel::mclapply(1:random.n, function(x) {
-        FactorShufCorrelate(
+        FactorShufCorrelate_new(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
         CountCorrelation(intersect = intersect, condition = condition)
@@ -579,7 +663,7 @@ ObsExpObj <- function(
 
       BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
       expect <- BiocParallel::bplapply(1:random.n, function(x) {
-        FactorShufCorrelate(
+        FactorShufCorrelate_new(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
         CountCorrelation(intersect = intersect, condition = condition)
