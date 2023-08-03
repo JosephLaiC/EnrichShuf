@@ -641,7 +641,7 @@ ObsExpObj <- function(
   if (parallel==1) {
 
     expect <- lapply(1:random.n, function(x)
-      FactorShufCorrelate_new(
+      FactorShufCorrelate(
         factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
@@ -653,7 +653,7 @@ ObsExpObj <- function(
     if (parallel.type=="mclapply") {
 
       expect <- parallel::mclapply(1:random.n, function(x) {
-        FactorShufCorrelate_new(
+        FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
         CountCorrelation(intersect = intersect, condition = condition)
@@ -663,7 +663,7 @@ ObsExpObj <- function(
 
       BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
       expect <- BiocParallel::bplapply(1:random.n, function(x) {
-        FactorShufCorrelate_new(
+        FactorShufCorrelate(
           factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
           genome = genome, incl = incl, seed = x) %>% 
         CountCorrelation(intersect = intersect, condition = condition)
