@@ -606,7 +606,7 @@ ObsExpObj <- function(
 
   ## observe result
   observe <- FactorElementCorrelate(
-    factor = element, element = factor, strand = strand, tag = tag) %>%
+    factor = factor, element = element, strand = strand, tag = tag) %>%
     CountCorrelation(intersect = intersect, condition = condition)
 
   if (is.character(genome)) {
