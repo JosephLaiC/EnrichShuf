@@ -1,4 +1,34 @@
 
+#' Calculate the p-value of observed number of peaks in the expect distribution
+#' 
+#' @param data The input data contained the information of expect distribution or observe number.
+#' @param name The name of condition to be calculated.
+#' @param log.p If TRUE, the log of p-value will be returned.
+#' 
+#' @export
+ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
+
+  observe <- data$observe
+  expect  <- data$expect
+
+  expect.number <- lapply(1:length(expect), function(x) {
+    expect[[x]][name]
+  }) %>% unlist()
+
+  mean <- mean(expect.number)
+  sd   <- sd(expect.number)
+
+  result <- data.frame(
+    condition = name,
+    observe   = observe[name],
+    expect    = mean,
+    log2FC    = log2(observe[name]/mean),
+    upper.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
+    lower.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=TRUE,  log.p=log.p))
+
+  return(result)
+
+}
 
 #' Calculate the p-value of observed number of peaks in the expect distribution
 #' 

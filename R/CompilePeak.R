@@ -1,229 +1,365 @@
-#' Extract start and end position from grange
-#'
-#' @param grange input grange
-#'
-#' @export
-ExtractStartEnd <- function(grange, strand=NULL){
 
-  if (length(grange)>1){
-    stop("Query peak must only contained 1 peak: ExtractStartEnd")
-  }
 
-  strand <- GenomicRanges::strand(grange)@values
-
-  if (is.null(strand)){
-    strand <- "+"
-  }
-
-  if (strand=="+"){
-
-    result <- data.frame(
-      chr   = c(GenomicRanges::seqnames(grange), GenomicRanges::seqnames(grange)),
-      start = c(GenomicRanges::start(grange),    GenomicRanges::end(grange)),
-      end   = c(GenomicRanges::start(grange),    GenomicRanges::end(grange)))
-
-  } else if (strand=="-"){
-
-    result <- data.frame(
-      chr   = c(GenomicRanges::seqnames(grange), GenomicRanges::seqnames(grange)),
-      start = c(GenomicRanges::end(grange),      GenomicRanges::start(grange)),
-      end   = c(GenomicRanges::end(grange),      GenomicRanges::start(grange)))
-
-  } else {
-    stop("Strand onlu can specify *, +, -, strand is ", strand)
-  }
-
-  return(GenomicRanges::makeGRangesFromDataFrame(result))
-
-}
-
-#' Extract distance between query and subject within a distance threshold
-#'
-#' @param query input query peak
-#' @param subject input subject peak
-#' @param name assign the fourth column name and keep it exsist in grange
-#' @param DistIn assign the distance threshold
-#' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
-#'
-#' @export
-DistCalculate <- function(
-    query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=NULL, verbose=FALSE){
-
-  if (!nrow(data.frame(query))==1) {
-    stop("Query peak must only contained 1 peak")
-  } else if (!is.numeric(DistIn)) {
-    stop("Distance threshold must be numeric")
-  }
-
-  ## Search the global overlap region
-  idx <- data.frame(GenomicRanges::findOverlaps(query+DistIn, subject))[,2]
-
-  if (length(idx) > 0){
-    subject <- subject[idx]
-  } else {
-    return(NULL)
-  }
-
-  overlap.idx    <- data.frame(GenomicRanges::findOverlaps(query, subject))[,2]
-  overlap.result <- rep(0, length(overlap.idx)) ## 0 is the overlap result, number is equal to the length of overlap index
-
-  if (any(isTRUE(OVERLAY.ONLY), DistIn==0)){
-
-    if (isTRUE(verbose)){
-      message("OVERLAY.ONLY is TRUE or DistIn is 0, only return the overlap region")
+FactorElementCorObj <- function(
+  element, factor=factor, dist=1000000, strand=FALSE, 
+  enrichType="upstream", parallel=1, parallel.type="mclapply") {
+  
+  ## Check factor format and input
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
     }
-
-    if (length(overlap.idx)==0) {
-      return(NULL)
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the factor format")
+  }
+  
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
+  
+  ## Check element format and input
+  if (is.character(element)) {
+    
+    if (!file.exists(element)) {
+      stop("Check the element file exsist in path")
+    }
+    
+    if (isTRUE(strand)) {
+      
+      element <- valr::read_bed(element, n_fields=6)[,1:6]
+      
     } else {
-      return(overlap.result)
+      
+      element <- valr::read_bed(element, n_fields=4)[,1:4]
+      
     }
-
-
-  }
-
-  ## remove the overlap region from subject
-  if (length(overlap.idx) > 0) {
-    subject <- subject[-overlap.idx]
-  }
-
-
-  if (isTRUE(strand)){
-
-    if (GenomicRanges::width(query)==1){
-      query <- ExtractStartEnd(query+1, strand=strand)
+    
+  } else if (is.data.frame(element)) {
+    
+    if (isTRUE(strand)) {
+      
+      element <- element[,1:6]
+      
     } else {
-      query <- ExtractStartEnd(query, strand=strand)
+      
+      element <- element[,1:4]
+      
     }
-
-    table      <- data.frame(GenomicRanges::distanceToNearest(subject, query))
-    upstream   <- table[table[,"subjectHits"]==1,]
-    downstream <- table[table[,"subjectHits"]==2,]
-
-    up.res <- upstream[,"distance"]
-    names(up.res) <- data.frame(subject)[upstream[,"queryHits"],"name"]
-
-    down.res <- downstream[,"distance"]
-    names(down.res) <- data.frame(subject)[downstream[,"queryHits"],"name"]
-
-    result <- c(overlap.result, -up.res, down.res)
-
+    
+  } else if (class(element)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
   } else {
-
-    result <- GenomicRanges::distance(subject, query)
-    names(result) <- data.frame(subject)[,name]
-
+    stop("Check the element format")
   }
-
-  if (is.null(DistIn)){
-    result <- result
+  
+  if (isTRUE(strand)) {
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name", "score", "strand")
+    
   } else {
-    result <- result[abs(result) < DistIn]
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name")
+    
   }
+  
+  gc(verbose=FALSE)
+  if (isTRUE(strand)) {
+    
+    if (enrichType=="upstream") {
+      
+      plus.element  <- element[element$strand=="+",]
+      minus.element <- element[element$strand=="-",]
+      
+      if (parallel > 1) {
+        
+        if (parallel.type=="mclapply") {
+          
+          plus.result <- parallel::mclapply(1:nrow(plus.element), function(x) {
+            table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name.x
+            number
+          }, mc.cores=parallel)
+          
+          minus.result <- parallel::mclapply(1:nrow(minus.element), function(x) {
+            table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+              filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name.x
+            number
+          }, mc.cores=parallel)
+          
+        } else if (parallel.type=="bplapply") {
+          
+          BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+          plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
+            table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name
+            number
+          })
+          
+          minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
+            table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+              filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name
+            number
+          })
+          BiocParallel::register(BiocParallel::SerialParam())
+          
+        } 
+        
+      } else {
+        
+        plus.result <- lapply(1:nrow(plus.element), function(x) {
+          table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+            filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name
+          number
+        })
+        
+        minus.result <- lapply(1:nrow(minus.element), function(x) {
+          table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+            filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name
+          number
+        })
+        
+      }
+      
+      result <- c(plus.result, minus.result)
+      
+    }
+    
+    
+  } else {
+    
+    if (parallel > 1) {
+      
+      if (parallel.type=="mclapply") {
+        
+        result <- parallel::mclapply(1:nrow(element), function(x) {
+          table <- valr::bed_closest(factor, element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
+          number <- table$.dist
+          names(number) <- table$factor_name.x
+          number
+        }, mc.cores=parallel)
+        
+      } else if (parallel.type=="bplapply") {
+        
+        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+        result <- BiocParallel::bplapply(1:nrow(element), function(x) {
+          table <- valr::bed_closest(factor, element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
+          number <- table[,1]
+          names(number) <- table[,2]
+          number
+        })
+        BiocParallel::register(BiocParallel::SerialParam())
+        
+      }
 
+      
+    } else {
+      
+      result <- lapply(1:nrow(element), function(x) {
+        table <- valr::bed_closest(factor, element[x,]) %>% 
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+        number <- table$.dist
+        names(number) <- table$factor_name.x
+        number
+      })
+      
+    }
+  }
+  
+  names(result) <- data.frame(element)[,4]
   return(result)
-
+  
 }
 
+# ExpFactorElementCor <- function(
+#   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
+#   seed=1, genome=genome, incl=NULL, excl=NULL) {
 
-# DistPassSub <- function(
-#   list, query=query, subject=subject, name="name", DistIn=1000000, strand=FALSE){
+  
 
-#   if (!all(names(list)%in%c("idx", "list"))){
-#     stop("")
-#   }
 
 # }
 
-#' Compile the distance information of factors to elements within distance
-#'
-#' @param query input query peak
-#' @param subject input subject peak
-#' @param name assign the fourth column name and keep it exsist in grange
-#' @param DistIn assign the distance threshold
-#' @param parallel if assign TRUE, the function will run in parallel
-#' @param save if assign TRUE, the function will save the result
-#' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
-#'
-#' @export
-CompilePeak <- function(
-  query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=NULL){
 
-  # Import query
-  if (is.data.frame(query)) {
 
-    query <- bedfromfile(query, name=name, strand=strand)
+# factorEnirchElement <- function(
+#     element, factor=factor,)
 
-  } else if (is.character(query)) {
 
-    if (file.exists(query)) {
-      query <- bedfromfile(query, name=name, strand=strand)
-    } else {
-      stop("Query file doesn't exist")
-    }
 
-  }
+# factorElementCor <- function(
+#   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=TRUE) {
+  
+#     ## Check factor format and input
+#   if (is.character(factor)) {
+    
+#     if (!file.exists(factor)) {
+#       stop("Check the factor file exsist in path")
+#     }
+    
+#     factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+#   } else if (is.data.frame(factor)) {
+    
+#     factor <- factor[,1:4]
+    
+#   } else if (class(factor)[[1]]=="GRanges") {
+    
+#     stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+#   } else {
+#     stop("Check the factor format")
+#   }
+  
+#   colnames(factor) <- c("chrom", "start", "end", "factor_name")
+  
+#   ## Check element format and input
+#   if (is.character(element)) {
+    
+#     if (!file.exists(element)) {
+#       stop("Check the element file exsist in path")
+#     }
+    
+#     if (isTRUE(strand)) {
+      
+#       element <- valr::read_bed(element, n_fields=6)[,1:6]
+      
+#     } else {
+      
+#       element <- valr::read_bed(element, n_fields=4)[,1:4]
+      
+#     }
+    
+#   } else if (is.data.frame(element)) {
+    
+#     if (isTRUE(strand)) {
+      
+#       element <- element[,1:6]
+      
+#     } else {
+      
+#       element <- element[,1:4]
+      
+#     }
+    
+#   } else if (class(element)[[1]]=="GRanges") {
+    
+#     stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+#   } else {
+#     stop("Check the element format")
+#   }
+  
+#   if (isTRUE(strand)) {
+    
+#     colnames(element) <- c("chrom", "start", "end", "element_name", "score", "strand")
+    
+#   } else {
+    
+#     colnames(element) <- c("chrom", "start", "end", "element_name")
+    
+#   }
 
-  if (!class(query)=="GRanges"){
-    stop("Check input query format")
-  }
+#   if (isTRUE(strand)) {
 
-  # Import subject
-  if (is.data.frame(subject)) {
+#     if (enrichType=="upstream") {
 
-    subject <- bedfromfile(subject, name=name)
+#       plus.element  <- element[element$strand=="+",]
+#       minus.element <- element[element$strand=="-",]
 
-  } else if (is.character(subject)) {
+#       if (isTRUE(parrallel)) {
 
-    if (file.exists(subject)) {
-      subject <- bedfromfile(subject, name=name)
-    } else {
-      stop("Subject file doesn't exist")
-    }
+#         plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
+#           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+#             filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name, .dist)
+#           number <- table$.dist
+#           names(number) <- table$factor_name
+#           number
+#         })
 
-  }
+#         minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
+#           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+#             filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name, .dist)
+#           number <- table$.dist
+#           names(number) <- table$factor_name
+#           number
+#         })
 
-  if (!class(subject)=="GRanges") {
-    stop("Subject must be GRanges")
-  }
+#       } else {
 
-  # SIGN <- NULL; RESULT <- NULL
-  # for (i in 1:nrow(OVERLAP.RESULT)){
-  #   if (is.null(SIGN)){
-  #     Q.flag    <- OVERLAP.RESULT[i,1]
-  #     S.numbers <- OVERLAP.RESULT[i,2]
-  #     SIGN      <- TRUE
-  #   } else {
+#         plus.result <- lapply(1:nrow(plus.element), function(x) {
+#           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+#             filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name, .dist)
+#           number <- table$.dist
+#           names(number) <- table$factor_name
+#           number
+#         })
 
-  #     if (Q.flag==OVERLAP.RESULT[i,1]){
-  #       S.numbers <- c(S.numbers, OVERLAP.RESULT[i,2])
-  #     } else {
-  #       LIST <- list(idx=Q.flag, list=S.numbers)
-  #       RESULT[[paste("flag", Q.flag, sep="-")]] <- LIST
-  #       Q.flag <- OVERLAP.RESULT[i,1]
-  #       S.numbers <- OVERLAP.RESULT[i,2]
-  #     }
+#         minus.result <- lapply(1:nrow(minus.element), function(x) {
+#           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+#             filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name, .dist)
+#           number <- table$.dist
+#           names(number) <- table$factor_name
+#           number
+#         })
 
-  #   }
-  # }
+#       }
 
-  if (isTRUE(parallel)){
+#       result <- c(plus.result, minus.result)
 
-    ## Transform grange to list
-    query.list <- split(query, 1:length(query))
-    library(BiocParallel)
-    result     <- BiocParallel::bplapply(
-      query.list, DistCalculate, subject=subject, name=name, DistIn=DistIn, strand=strand)
+#     }
 
-  } else {
 
-    result <- lapply(1:length(query), function(i){
-      DistCalculate(query[i], subject=subject, name=name, DistIn=DistIn, strand=strand)
-    })
+#   } else {
 
-  }
+#     if (isTRUE(parrallel)) {
 
-  names(result) <- data.frame(query)[,name]
-  return(result)
+#       result <- BiocParallel::bplapply(1:nrow(element), function(x) {
+#         table <- valr::bed_closest(factor, element[x,]) %>% 
+#           filter(abs(.dist) <= dist) %>% select(name.x, .dist)
+#         number <- table$.dist
+#         names(number) <- table$name.x
+#         number
+#       })
 
-}
+#     } else {
+
+#       result <- lapply(1:nrow(element), function(x) {
+#         table <- valr::bed_closest(factor, element[x,]) %>% 
+#           filter(abs(.dist) <= dist) %>% select(name.x, .dist)
+#         number <- table$.dist
+#         names(number) <- table$name.x
+#         number
+#       })
+
+#     }
+#   }
+
+#   return(result)
+  
+# }
