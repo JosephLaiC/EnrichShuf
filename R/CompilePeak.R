@@ -322,7 +322,7 @@ ShufFactorElementCorObj <- function(
 
   }
 
-  result <- factorElementCor(
+  result <- FactorElementCorObj(
     element       = element, 
     facctor       = shuffle, 
     dist          = dist, 
