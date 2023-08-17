@@ -119,7 +119,7 @@ FactorElementCorObj <- function(
           lapply(start:end, function(y){
 
             table <- valr::bed_closest(factor, plus.element[y,]) %>% 
-              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
             number <- table$.dist
             names(number) <- table$factor_name.x
             number
@@ -133,7 +133,7 @@ FactorElementCorObj <- function(
           lapply(start:end, function(y){
 
             table <- valr::bed_closest(factor, minus.element[y,]) %>% 
-              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
             number <- table$.dist * -1
             names(number) <- table$factor_name.x
             number
@@ -146,7 +146,7 @@ FactorElementCorObj <- function(
         BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
         plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-            filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
           number <- table$.dist
           names(number) <- table$factor_name
           number
@@ -154,7 +154,7 @@ FactorElementCorObj <- function(
           
         minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-            filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
           number <- table$.dist
           names(number) <- table$factor_name
           number
@@ -167,7 +167,7 @@ FactorElementCorObj <- function(
         
       plus.result <- lapply(1:nrow(plus.element), function(x) {
         table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-          filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
         number <- table$.dist
         names(number) <- table$factor_name
         number
@@ -175,7 +175,7 @@ FactorElementCorObj <- function(
         
       minus.result <- lapply(1:nrow(minus.element), function(x) {
         table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-          filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
         number <- table$.dist * -1
         names(number) <- table$factor_name
         number
@@ -201,7 +201,7 @@ FactorElementCorObj <- function(
           lapply(start:end, function(y){
 
             table <- valr::bed_closest(factor, element[y,]) %>% 
-              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
             number <- table$.dist
             names(number) <- table$factor_name.x
             number
