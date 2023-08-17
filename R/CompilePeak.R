@@ -324,7 +324,7 @@ ShufFactorElementCorObj <- function(
 
   result <- FactorElementCorObj(
     element       = element, 
-    facctor       = shuffle, 
+    factor        = shuffle, 
     dist          = dist, 
     strand        = strand, 
     parallel      = parallel, 
