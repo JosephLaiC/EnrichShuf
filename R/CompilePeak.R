@@ -1,9 +1,28 @@
 
-
+#' Compile the associated factors to each element with distance information
+#' 
+#' @param element The element file with bed format
+#' @param factor The factor file with bed format
+#' @param dist The distance to the element for collection
+#' @param strand If TRUE, modified the dist with strand information
+#' 
+#' @export
 FactorElementCorObj <- function(
-  element, factor=factor, dist=1000000, strand=FALSE, 
-  enrichType="upstream", parallel=1, parallel.type="mclapply") {
+  element, factor=factor, dist=1000000, strand=FALSE,
+  parallel=1, parallel.type="mclapply") {
   
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
+  }
+
+  if (!parallel > 0) {
+    stop("Check the parallel input is larger than 0")
+  }
+
+  if (!is.numeric(dist)) {
+    stop("Check the dist input is numeric")
+  }
+
   ## Check factor format and input
   if (is.character(factor)) {
     
@@ -73,95 +92,123 @@ FactorElementCorObj <- function(
     colnames(element) <- c("chrom", "start", "end", "element_name")
     
   }
-  
+
   gc(verbose=FALSE)
   if (isTRUE(strand)) {
-    
-    if (enrichType=="upstream") {
       
-      plus.element  <- element[element$strand=="+",]
-      minus.element <- element[element$strand=="-",]
+    plus.element  <- element[element$strand=="+",]
+    minus.element <- element[element$strand=="-",]
       
-      if (parallel > 1) {
+    if (parallel > 1) {
         
-        if (parallel.type=="mclapply") {
+      ## Create the index for parallel
+      plus.idx.num <- seq(1, nrow(plus.element), ceiling(nrow(plus.element)/parallel))
+      plus.idx <- data.frame(
+        start = plus.idx.num,
+        end = c(plus.idx.num[-1]-1, nrow(plus.element)))
+
+      minus.idx.num <- seq(1, nrow(minus.element), ceiling(nrow(minus.element)/parallel))
+      minus.idx <- data.frame(
+        start = minus.idx.num,
+        end = c(minus.idx.num[-1]-1, nrow(minus.element)))
+
+      if (parallel.type=="mclapply") {
           
-          plus.result <- parallel::mclapply(1:nrow(plus.element), function(x) {
-            table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+        plus.result <- parallel::mclapply(1:nrow(plus.idx), function(x) {
+          start <- plus.idx[x,1]; end <- plus.idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, plus.element[y,]) %>% 
               filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
             number <- table$.dist
             names(number) <- table$factor_name.x
             number
-          }, mc.cores=parallel)
+
+          })
+        }, mc.cores=parallel) %>% Reduce(c, .)
           
-          minus.result <- parallel::mclapply(1:nrow(minus.element), function(x) {
-            table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-              filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
-            number <- table$.dist
+
+        minus.result <- parallel::mclapply(1:nrow(minus.idx), function(x) {
+          start <- minus.idx[x,1]; end <- minus.idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, minus.element[y,]) %>% 
+              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist * -1
             names(number) <- table$factor_name.x
             number
-          }, mc.cores=parallel)
-          
-        } else if (parallel.type=="bplapply") {
-          
-          BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-          plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
-            table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name
-            number
+
           })
-          
-          minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
-            table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-              filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name
-            number
-          })
-          BiocParallel::register(BiocParallel::SerialParam())
-          
-        } 
+        }, mc.cores=parallel) %>% Reduce(c, .)
         
-      } else {
-        
-        plus.result <- lapply(1:nrow(plus.element), function(x) {
+      } else if (parallel.type=="bplapply") {
+          
+        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+        plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
             filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
           number <- table$.dist
           names(number) <- table$factor_name
           number
         })
-        
-        minus.result <- lapply(1:nrow(minus.element), function(x) {
+          
+        minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
             filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
           number <- table$.dist
           names(number) <- table$factor_name
           number
         })
+        BiocParallel::register(BiocParallel::SerialParam())
+          
+      } 
         
-      }
-      
-      result <- c(plus.result, minus.result)
-      
+    } else if (parallel==1) {
+        
+      plus.result <- lapply(1:nrow(plus.element), function(x) {
+        table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+          filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+        number <- table$.dist
+        names(number) <- table$factor_name
+        number
+      })
+        
+      minus.result <- lapply(1:nrow(minus.element), function(x) {
+        table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+          filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name.x, .dist)
+        number <- table$.dist * -1
+        names(number) <- table$factor_name
+        number
+      })
+        
     }
+      
+    result <- c(plus.result, minus.result)
     
-    
-  } else {
+  } else if (!isTRUE(strand)) {
     
     if (parallel > 1) {
       
+      idx.num <- seq(1, nrow(element), ceiling(nrow(element)/parallel))
+      idx <- data.frame(
+        start = idx.num,
+        end = c(idx.num[-1]-1, nrow(element)))
+
       if (parallel.type=="mclapply") {
         
-        result <- parallel::mclapply(1:nrow(element), function(x) {
-          table <- valr::bed_closest(factor, element[x,]) %>% 
-            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
-          number <- table$.dist
-          names(number) <- table$factor_name.x
-          number
-        }, mc.cores=parallel)
+        result <- parallel::mclapply(1:nrow(idx), function(x) {
+          start <- idx[x,1]; end <- idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, element[y,]) %>% 
+              filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name.x
+            number
+
+          })
+        }, mc.cores=parallel) %>% Reduce(c, .)
+        
         
       } else if (parallel.type=="bplapply") {
         
@@ -195,6 +242,98 @@ FactorElementCorObj <- function(
   return(result)
   
 }
+
+#' Compile the associated factors to each element with distance information by shuffle factors
+#' 
+#' @param element The element file with bed format
+#' @param factor The factor file with bed format
+#' @param dist The distance to define the associated factors
+#' @param strand The strand information of element file
+#' @param parallel The number of cores to run the function
+#' @param parallel.type The type of parallel
+#' @param genome The genome information
+#' @param incl The included chromosomes
+#' @param excl The excluded chromosomes
+#' @param seed The seed number
+#' 
+#' @export
+ShufFactorElementCorObj <- function(
+  element, factor=factor, dist=1000000, strand=FALSE,
+  parallel=1, parallel.type="mclapply",
+  genome=genome, incl=NULL, excl=NULL, seed=1) {
+
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
+    }
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the factor format")
+  }
+  
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
+
+  if (is.character(genome)) {
+
+    if (!file.exists(genome)) {
+      stop("Check the genome file exsist in path")
+    }
+
+    genome <- valr::read_genome(genome)
+
+  } else if (is.data.frame(genome)) {
+
+    genome <- genome[,1:2]
+
+  } else {
+    stop("Check the genome format")
+  }
+
+  if (all(!is.null(incl), !is.null(excl))) {
+    
+    stop("Check the incl and excl, only could specify one")
+
+  } else if (!is.null(excl)) {
+
+    incl    <- data.frame(
+      chrom = data.frame(genome)[,1],
+      start = 0,
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else if (!is.null(incl)) {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
+
+  } else {
+
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed)
+
+  }
+
+  result <- factorElementCor(
+    element       = element, 
+    facctor       = shuffle, 
+    dist          = dist, 
+    strand        = strand, 
+    parallel      = parallel, 
+    parallel.type = parallel.type)
+
+  return(result)
+
+}
+
 
 # ExpFactorElementCor <- function(
 #   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
