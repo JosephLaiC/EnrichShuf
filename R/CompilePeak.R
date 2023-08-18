@@ -335,6 +335,100 @@ ShufFactorElementCorObj <- function(
 }
 
 
+CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
+
+  if (dist==0) {
+
+    result <- lapply(data, function(x){
+      sum(abs(x) == dist)
+    })
+
+  } else {
+    
+    if (isTRUE(intersect)) {
+
+      if (include=="all") {
+
+        result <- lapply(data, function(x){
+          sum(abs(x) < dist)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(data, function(x){
+          sum(x <= 0 & abs(x) < dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(data, function(x){
+          sum(x >= 0 & abs(x) < dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    } else {
+
+      if (include=="all") {
+
+        result <- lapply(data, function(x){
+          sum(abs(x) <= dist & abs(x) > 0)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(data, function(x){
+          sum(x < 0 & abs(x) <= dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(data, function(x){
+          sum(x > 0 & abs(x) <= dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    }
+
+  }
+
+  return(unlist(result))
+
+}
+
+# binomialPeakCompile <- funtion(observe, expect.data=expect.data) {
+
+#   if (!is.numeric(observe)) {
+#     stop("Check the observe data")
+#   }
+
+#   lapply(expect.data, function(x){
+
+#     if (!is.numeric(x)) {
+#       stop("Check the expect data")
+#     }
+
+#     if (!identical(names(x), names(observe))) {
+#       stop("Check the names of expect and observe data")
+#     }
+
+#   })
+
+#   INCREASE.logic <- lapply(expect.data, function(x){observe > x})
+#   DECREASE.logic <- lapply(expect.data, function(x){observe < x})
+
+
+
+# }
+
+
+
+
 # ExpFactorElementCor <- function(
 #   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
 #   seed=1, genome=genome, incl=NULL, excl=NULL) {
