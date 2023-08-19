@@ -282,83 +282,83 @@ TargetFactorSTAT <- function(
 }
 
 
-FactorElementSTAT <- function(
-  factor=NULL, factor.min=0, factor.max=0, 
-  element=NULL, name.list=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
+# FactorElementSTAT <- function(
+#   factor=NULL, factor.min=0, factor.max=0, 
+#   element=NULL, name.list=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
 
-  if (is.null(factor)) {
-    stop("Please assign a character to factor")
-  }
+#   if (is.null(factor)) {
+#     stop("Please assign a character to factor")
+#   }
 
 
-  if (is.null(element)) {
-    stop("Please assign a character to element")
-  }
+#   if (is.null(element)) {
+#     stop("Please assign a character to element")
+#   }
 
-  ##  Check the number of min and max
-  if (!all(is.numeric(factor.min), is.numeric(factor.max))) {
-    stop("Please assign a number to factorA.min, factorA.max, factorB.min, factorB.max")
-  }
+#   ##  Check the number of min and max
+#   if (!all(is.numeric(factor.min), is.numeric(factor.max))) {
+#     stop("Please assign a number to factorA.min, factorA.max, factorB.min, factorB.max")
+#   }
 
-  if (all(factor.min==0, factor.max==0)) {
+#   if (all(factor.min==0, factor.max==0)) {
     
-    factor.intersect <- TRUE
+#     factor.intersect <- TRUE
  
-  } else {
+#   } else {
 
-    if (factor.min > factor.max) {
-      stop("factorA.min should be smaller than factorA.max")
-    } 
+#     if (factor.min > factor.max) {
+#       stop("factorA.min should be smaller than factorA.max")
+#     } 
 
-    factor.intersect <- FALSE
+#     factor.intersect <- FALSE
 
-  }
+#   }
 
-  if (is.character(element)) {
+#   if (is.character(element)) {
 
-    if (file.exists(element)) {
-      element <- valr::read_bed(element)
-    } else {
-      stop("Please assign a valid file path")
-    }
+#     if (file.exists(element)) {
+#       element <- valr::read_bed(element)
+#     } else {
+#       stop("Please assign a valid file path")
+#     }
 
-  } else {
+#   } else {
 
-    if (!is.data.frame(element)) {
-      stop("Please check the input element")
-    }
+#     if (!is.data.frame(element)) {
+#       stop("Please check the input element")
+#     }
 
-  }
+#   }
 
-  element.list <- unique(data.frame(element)[,4])
+#   element.list <- unique(data.frame(element)[,4])
 
-  element.factor <- FactorElementCorrelate(
-    factor  = element, 
-    element = factor, 
-    tag     = "A")
+#   element.factor <- FactorElementCorrelate(
+#     factor  = element, 
+#     element = factor, 
+#     tag     = "A")
 
-  if (isTRUE(factor.intersect)) {
+#   if (isTRUE(factor.intersect)) {
 
-    factor.list <- unique(element.factor[element.factor[,4]==0,1])
+#     factor.list <- unique(element.factor[element.factor[,4]==0,1])
 
-  } else {
+#   } else {
 
-    factor.list <- unique(element.factor[
-      element.factor[,4]>factor.min & element.factor[,4]<=factor.max,1])
+#     factor.list <- unique(element.factor[
+#       element.factor[,4]>factor.min & element.factor[,4]<=factor.max,1])
 
-  }
+#   }
 
-  result <- TargetFactorSTAT(
-    factor     = factor.list, 
-    total      = element.list, 
-    element    = name.list, 
-    random.num = random.num, 
-    log.p      = log.p, 
-    parallel  = parallel)
+#   result <- TargetFactorSTAT(
+#     factor     = factor.list, 
+#     total      = element.list, 
+#     element    = name.list, 
+#     random.num = random.num, 
+#     log.p      = log.p, 
+#     parallel  = parallel)
 
-  return(result)
+#   return(result)
 
-}
+# }
 
 
 
