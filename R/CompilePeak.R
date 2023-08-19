@@ -334,7 +334,20 @@ ShufFactorElementCorObj <- function(
 
 }
 
-
+#' Transform the data contained associated factors to each element with distance to a data list
+#' 
+#' @param data The data contained associated factors to each element with distance
+#' @param dist The distance to define the associated factors
+#' @param intersect If  TRUE, results will be the number of elements that intersect with the factor
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all the elements that intersect with the factor. \cr
+#' \cr
+#' "upstream" - Include all the elements that at the upstream of the factor. \cr
+#' \cr
+#' "downstream" - Include all the elements that at the downstream of the factor.
+#' 
+#' @export
 CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
   if (dist==0) {
@@ -401,7 +414,19 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
 }
 
-binomialDistPeakCompile <- function(
+#' Compare the observe compile information with expect compile information by binomial distribution
+#' 
+#' @param observe The observe compile information
+#' @param expect.data The expect compile information
+#' @param parallel The number of cores to run the function
+#' @param parallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel
+#'
+#' @export
+binomialPeakCompile <- function(
   observe, expect.data=expect.data, 
   parallel=1, parallel.type="mclapply") {
 
@@ -536,7 +561,18 @@ binomialDistPeakCompile <- function(
 
 }
 
-
+#' Compare the observe compile information with expect compile information by normal distribution
+#' 
+#' @param observe A numeric vector of observe data
+#' @param expect.data A list of numeric vector of expect data
+#' @param parallel The number of cores to use
+#' @param parallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel
+#'
+#' @export
 normalDistPeakCompile <- function(
     observe, expect.data=expect.data, 
     parallel=1, parallel.type="mclapply"){
@@ -668,199 +704,3 @@ normalDistPeakCompile <- function(
   
 }
 
-
-# binomialPeakCompile <- funtion(observe, expect.data=expect.data) {
-
-#   if (!is.numeric(observe)) {
-#     stop("Check the observe data")
-#   }
-
-#   lapply(expect.data, function(x){
-
-#     if (!is.numeric(x)) {
-#       stop("Check the expect data")
-#     }
-
-#     if (!identical(names(x), names(observe))) {
-#       stop("Check the names of expect and observe data")
-#     }
-
-#   })
-
-#   INCREASE.logic <- lapply(expect.data, function(x){observe > x})
-#   DECREASE.logic <- lapply(expect.data, function(x){observe < x})
-
-
-
-# }
-
-
-
-
-# ExpFactorElementCor <- function(
-#   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=FALSE, 
-#   seed=1, genome=genome, incl=NULL, excl=NULL) {
-
-  
-
-
-# }
-
-
-
-# factorEnirchElement <- function(
-#     element, factor=factor,)
-
-
-
-# factorElementCor <- function(
-#   element, factor=factor, dist=1000000, strand=FALSE, enrichType="upstream", parrallel=TRUE) {
-  
-#     ## Check factor format and input
-#   if (is.character(factor)) {
-    
-#     if (!file.exists(factor)) {
-#       stop("Check the factor file exsist in path")
-#     }
-    
-#     factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
-    
-#   } else if (is.data.frame(factor)) {
-    
-#     factor <- factor[,1:4]
-    
-#   } else if (class(factor)[[1]]=="GRanges") {
-    
-#     stop("Element format is GRanges, please convert it to data.frame with bed format")
-    
-#   } else {
-#     stop("Check the factor format")
-#   }
-  
-#   colnames(factor) <- c("chrom", "start", "end", "factor_name")
-  
-#   ## Check element format and input
-#   if (is.character(element)) {
-    
-#     if (!file.exists(element)) {
-#       stop("Check the element file exsist in path")
-#     }
-    
-#     if (isTRUE(strand)) {
-      
-#       element <- valr::read_bed(element, n_fields=6)[,1:6]
-      
-#     } else {
-      
-#       element <- valr::read_bed(element, n_fields=4)[,1:4]
-      
-#     }
-    
-#   } else if (is.data.frame(element)) {
-    
-#     if (isTRUE(strand)) {
-      
-#       element <- element[,1:6]
-      
-#     } else {
-      
-#       element <- element[,1:4]
-      
-#     }
-    
-#   } else if (class(element)[[1]]=="GRanges") {
-    
-#     stop("Element format is GRanges, please convert it to data.frame with bed format")
-    
-#   } else {
-#     stop("Check the element format")
-#   }
-  
-#   if (isTRUE(strand)) {
-    
-#     colnames(element) <- c("chrom", "start", "end", "element_name", "score", "strand")
-    
-#   } else {
-    
-#     colnames(element) <- c("chrom", "start", "end", "element_name")
-    
-#   }
-
-#   if (isTRUE(strand)) {
-
-#     if (enrichType=="upstream") {
-
-#       plus.element  <- element[element$strand=="+",]
-#       minus.element <- element[element$strand=="-",]
-
-#       if (isTRUE(parrallel)) {
-
-#         plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
-#           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-#             filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name, .dist)
-#           number <- table$.dist
-#           names(number) <- table$factor_name
-#           number
-#         })
-
-#         minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
-#           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-#             filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name, .dist)
-#           number <- table$.dist
-#           names(number) <- table$factor_name
-#           number
-#         })
-
-#       } else {
-
-#         plus.result <- lapply(1:nrow(plus.element), function(x) {
-#           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-#             filter(abs(.dist) <= dist, .dist <= 0) %>% select(factor_name, .dist)
-#           number <- table$.dist
-#           names(number) <- table$factor_name
-#           number
-#         })
-
-#         minus.result <- lapply(1:nrow(minus.element), function(x) {
-#           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-#             filter(abs(.dist) <= dist, .dist >= 0) %>% select(factor_name, .dist)
-#           number <- table$.dist
-#           names(number) <- table$factor_name
-#           number
-#         })
-
-#       }
-
-#       result <- c(plus.result, minus.result)
-
-#     }
-
-
-#   } else {
-
-#     if (isTRUE(parrallel)) {
-
-#       result <- BiocParallel::bplapply(1:nrow(element), function(x) {
-#         table <- valr::bed_closest(factor, element[x,]) %>% 
-#           filter(abs(.dist) <= dist) %>% select(name.x, .dist)
-#         number <- table$.dist
-#         names(number) <- table$name.x
-#         number
-#       })
-
-#     } else {
-
-#       result <- lapply(1:nrow(element), function(x) {
-#         table <- valr::bed_closest(factor, element[x,]) %>% 
-#           filter(abs(.dist) <= dist) %>% select(name.x, .dist)
-#         number <- table$.dist
-#         names(number) <- table$name.x
-#         number
-#       })
-
-#     }
-#   }
-
-#   return(result)
-  
-# }
