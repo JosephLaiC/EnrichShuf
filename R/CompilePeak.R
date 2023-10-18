@@ -1,229 +1,706 @@
-#' Extract start and end position from grange
-#'
-#' @param grange input grange
-#'
+
+#' Compile the associated factors to each element with distance information
+#' 
+#' @param element The element file with bed format
+#' @param factor The factor file with bed format
+#' @param dist The distance to the element for collection
+#' @param strand If TRUE, modified the dist with strand information
+#' 
 #' @export
-ExtractStartEnd <- function(grange, strand=NULL){
-
-  if (length(grange)>1){
-    stop("Query peak must only contained 1 peak: ExtractStartEnd")
+FactorElementCorObj <- function(
+  element, factor=factor, dist=1000000, strand=FALSE,
+  parallel=1, parallel.type="mclapply") {
+  
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
   }
 
-  strand <- GenomicRanges::strand(grange)@values
-
-  if (is.null(strand)){
-    strand <- "+"
+  if (!parallel > 0) {
+    stop("Check the parallel input is larger than 0")
   }
 
-  if (strand=="+"){
+  if (!is.numeric(dist)) {
+    stop("Check the dist input is numeric")
+  }
 
-    result <- data.frame(
-      chr   = c(GenomicRanges::seqnames(grange), GenomicRanges::seqnames(grange)),
-      start = c(GenomicRanges::start(grange),    GenomicRanges::end(grange)),
-      end   = c(GenomicRanges::start(grange),    GenomicRanges::end(grange)))
-
-  } else if (strand=="-"){
-
-    result <- data.frame(
-      chr   = c(GenomicRanges::seqnames(grange), GenomicRanges::seqnames(grange)),
-      start = c(GenomicRanges::end(grange),      GenomicRanges::start(grange)),
-      end   = c(GenomicRanges::end(grange),      GenomicRanges::start(grange)))
-
+  ## Check factor format and input
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
+    }
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
   } else {
-    stop("Strand onlu can specify *, +, -, strand is ", strand)
+    stop("Check the factor format")
+  }
+  
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
+  
+  ## Check element format and input
+  if (is.character(element)) {
+    
+    if (!file.exists(element)) {
+      stop("Check the element file exsist in path")
+    }
+    
+    if (isTRUE(strand)) {
+      
+      element <- valr::read_bed(element, n_fields=6)[,1:6]
+      
+    } else {
+      
+      element <- valr::read_bed(element, n_fields=4)[,1:4]
+      
+    }
+    
+  } else if (is.data.frame(element)) {
+    
+    if (isTRUE(strand)) {
+      
+      element <- element[,1:6]
+      
+    } else {
+      
+      element <- element[,1:4]
+      
+    }
+    
+  } else if (class(element)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
+  } else {
+    stop("Check the element format")
+  }
+  
+  if (isTRUE(strand)) {
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name", "score", "strand")
+    
+  } else {
+    
+    colnames(element) <- c("chrom", "start", "end", "element_name")
+    
   }
 
-  return(GenomicRanges::makeGRangesFromDataFrame(result))
+  gc(verbose=FALSE)
+  if (isTRUE(strand)) {
+      
+    plus.element  <- element[element$strand=="+",]
+    minus.element <- element[element$strand=="-",]
+      
+    if (parallel > 1) {
+        
+      ## Create the index for parallel
+      plus.idx.num <- seq(1, nrow(plus.element), ceiling(nrow(plus.element)/parallel))
+      plus.idx <- data.frame(
+        start = plus.idx.num,
+        end = c(plus.idx.num[-1]-1, nrow(plus.element)))
 
+      minus.idx.num <- seq(1, nrow(minus.element), ceiling(nrow(minus.element)/parallel))
+      minus.idx <- data.frame(
+        start = minus.idx.num,
+        end = c(minus.idx.num[-1]-1, nrow(minus.element)))
+
+      if (parallel.type=="mclapply") {
+          
+        plus.result <- parallel::mclapply(1:nrow(plus.idx), function(x) {
+          start <- plus.idx[x,1]; end <- plus.idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, plus.element[y,]) %>% 
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name.x
+            number
+
+          })
+        }, mc.cores=parallel) %>% Reduce(c, .)
+          
+
+        minus.result <- parallel::mclapply(1:nrow(minus.idx), function(x) {
+          start <- minus.idx[x,1]; end <- minus.idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, minus.element[y,]) %>% 
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+            number <- table$.dist * -1
+            names(number) <- table$factor_name.x
+            number
+
+          })
+        }, mc.cores=parallel) %>% Reduce(c, .)
+        
+      } else if (parallel.type=="bplapply") {
+          
+        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+        plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
+          table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name
+          number
+        })
+          
+        minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
+          table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name
+          number
+        })
+        BiocParallel::register(BiocParallel::SerialParam())
+          
+      } 
+        
+    } else if (parallel==1) {
+        
+      plus.result <- lapply(1:nrow(plus.element), function(x) {
+        table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+        number <- table$.dist
+        names(number) <- table$factor_name
+        number
+      })
+        
+      minus.result <- lapply(1:nrow(minus.element), function(x) {
+        table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+        number <- table$.dist * -1
+        names(number) <- table$factor_name
+        number
+      })
+        
+    }
+      
+    result <- c(plus.result, minus.result)
+    
+  } else if (!isTRUE(strand)) {
+    
+    if (parallel > 1) {
+      
+      idx.num <- seq(1, nrow(element), ceiling(nrow(element)/parallel))
+      idx <- data.frame(
+        start = idx.num,
+        end = c(idx.num[-1]-1, nrow(element)))
+
+      if (parallel.type=="mclapply") {
+        
+        result <- parallel::mclapply(1:nrow(idx), function(x) {
+          start <- idx[x,1]; end <- idx[x,2]
+          lapply(start:end, function(y){
+
+            table <- valr::bed_closest(factor, element[y,]) %>% 
+              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+            number <- table$.dist
+            names(number) <- table$factor_name.x
+            number
+
+          })
+        }, mc.cores=parallel) %>% Reduce(c, .)
+        
+        
+      } else if (parallel.type=="bplapply") {
+        
+        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
+        result <- BiocParallel::bplapply(1:nrow(element), function(x) {
+          table <- valr::bed_closest(factor, element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
+          number <- table[,1]
+          names(number) <- table[,2]
+          number
+        })
+        BiocParallel::register(BiocParallel::SerialParam())
+        
+      }
+
+      
+    } else {
+      
+      result <- lapply(1:nrow(element), function(x) {
+        table <- valr::bed_closest(factor, element[x,]) %>% 
+          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+        number <- table$.dist
+        names(number) <- table$factor_name.x
+        number
+      })
+      
+    }
+  }
+  
+  names(result) <- data.frame(element)[,4]
+  return(result)
+  
 }
 
-#' Extract distance between query and subject within a distance threshold
-#'
-#' @param query input query peak
-#' @param subject input subject peak
-#' @param name assign the fourth column name and keep it exsist in grange
-#' @param DistIn assign the distance threshold
-#' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
-#'
+#' Compile the associated factors to each element with distance information by shuffle factors
+#' 
+#' @param element The element file with bed format
+#' @param factor The factor file with bed format
+#' @param dist The distance to define the associated factors
+#' @param strand The strand information of element file
+#' @param parallel The number of cores to run the function
+#' @param parallel.type The type of parallel
+#' @param genome The genome information
+#' @param incl The included chromosomes
+#' @param excl The excluded chromosomes
+#' @param seed The seed number
+#' 
 #' @export
-DistCalculate <- function(
-    query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=NULL, verbose=FALSE){
+ShufFactorElementCorObj <- function(
+  element, factor=factor, dist=1000000, strand=FALSE,
+  parallel=1, parallel.type="mclapply",
+  genome=genome, incl=NULL, excl=NULL, seed=1) {
 
-  if (!nrow(data.frame(query))==1) {
-    stop("Query peak must only contained 1 peak")
-  } else if (!is.numeric(DistIn)) {
-    stop("Distance threshold must be numeric")
-  }
-
-  ## Search the global overlap region
-  idx <- data.frame(GenomicRanges::findOverlaps(query+DistIn, subject))[,2]
-
-  if (length(idx) > 0){
-    subject <- subject[idx]
+  if (is.character(factor)) {
+    
+    if (!file.exists(factor)) {
+      stop("Check the factor file exsist in path")
+    }
+    
+    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    
+  } else if (is.data.frame(factor)) {
+    
+    factor <- factor[,1:4]
+    
+  } else if (class(factor)[[1]]=="GRanges") {
+    
+    stop("Element format is GRanges, please convert it to data.frame with bed format")
+    
   } else {
-    return(NULL)
+    stop("Check the factor format")
   }
+  
+  colnames(factor) <- c("chrom", "start", "end", "factor_name")
 
-  overlap.idx    <- data.frame(GenomicRanges::findOverlaps(query, subject))[,2]
-  overlap.result <- rep(0, length(overlap.idx)) ## 0 is the overlap result, number is equal to the length of overlap index
+  if (is.character(genome)) {
 
-  if (any(isTRUE(OVERLAY.ONLY), DistIn==0)){
-
-    if (isTRUE(verbose)){
-      message("OVERLAY.ONLY is TRUE or DistIn is 0, only return the overlap region")
+    if (!file.exists(genome)) {
+      stop("Check the genome file exsist in path")
     }
 
-    if (length(overlap.idx)==0) {
-      return(NULL)
-    } else {
-      return(overlap.result)
-    }
+    genome <- valr::read_genome(genome)
 
+  } else if (is.data.frame(genome)) {
 
+    genome <- genome[,1:2]
+
+  } else {
+    stop("Check the genome format")
   }
 
-  ## remove the overlap region from subject
-  if (length(overlap.idx) > 0) {
-    subject <- subject[-overlap.idx]
-  }
+  if (all(!is.null(incl), !is.null(excl))) {
+    
+    stop("Check the incl and excl, only could specify one")
 
+  } else if (!is.null(excl)) {
 
-  if (isTRUE(strand)){
+    incl    <- data.frame(
+      chrom = data.frame(genome)[,1],
+      start = 0,
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
 
-    if (GenomicRanges::width(query)==1){
-      query <- ExtractStartEnd(query+1, strand=strand)
-    } else {
-      query <- ExtractStartEnd(query, strand=strand)
-    }
+  } else if (!is.null(incl)) {
 
-    table      <- data.frame(GenomicRanges::distanceToNearest(subject, query))
-    upstream   <- table[table[,"subjectHits"]==1,]
-    downstream <- table[table[,"subjectHits"]==2,]
-
-    up.res <- upstream[,"distance"]
-    names(up.res) <- data.frame(subject)[upstream[,"queryHits"],"name"]
-
-    down.res <- downstream[,"distance"]
-    names(down.res) <- data.frame(subject)[downstream[,"queryHits"],"name"]
-
-    result <- c(overlap.result, -up.res, down.res)
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
 
   } else {
 
-    result <- GenomicRanges::distance(subject, query)
-    names(result) <- data.frame(subject)[,name]
+    shuffle <- valr::bed_shuffle(factor, genome, seed=seed)
 
   }
 
-  if (is.null(DistIn)){
-    result <- result
-  } else {
-    result <- result[abs(result) < DistIn]
-  }
+  result <- FactorElementCorObj(
+    element       = element, 
+    factor        = shuffle, 
+    dist          = dist, 
+    strand        = strand, 
+    parallel      = parallel, 
+    parallel.type = parallel.type)
 
   return(result)
 
 }
 
-
-# DistPassSub <- function(
-#   list, query=query, subject=subject, name="name", DistIn=1000000, strand=FALSE){
-
-#   if (!all(names(list)%in%c("idx", "list"))){
-#     stop("")
-#   }
-
-# }
-
-#' Compile the distance information of factors to elements within distance
-#'
-#' @param query input query peak
-#' @param subject input subject peak
-#' @param name assign the fourth column name and keep it exsist in grange
-#' @param DistIn assign the distance threshold
-#' @param parallel if assign TRUE, the function will run in parallel
-#' @param save if assign TRUE, the function will save the result
-#' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
-#'
+#' Transform the data contained associated factors to each element with distance to a data list
+#' 
+#' @param data The data contained associated factors to each element with distance
+#' @param dist The distance to define the associated factors
+#' @param intersect If  TRUE, results will be the number of elements that intersect with the factor
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all the elements that intersect with the factor. \cr
+#' \cr
+#' "upstream" - Include all the elements that at the upstream of the factor. \cr
+#' \cr
+#' "downstream" - Include all the elements that at the downstream of the factor.
+#' 
 #' @export
-CompilePeak <- function(
-  query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=NULL){
+CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
-  # Import query
-  if (is.data.frame(query)) {
+  if (dist==0) {
 
-    query <- bedfromfile(query, name=name, strand=strand)
-
-  } else if (is.character(query)) {
-
-    if (file.exists(query)) {
-      query <- bedfromfile(query, name=name, strand=strand)
-    } else {
-      stop("Query file doesn't exist")
-    }
-
-  }
-
-  if (!class(query)=="GRanges"){
-    stop("Check input query format")
-  }
-
-  # Import subject
-  if (is.data.frame(subject)) {
-
-    subject <- bedfromfile(subject, name=name)
-
-  } else if (is.character(subject)) {
-
-    if (file.exists(subject)) {
-      subject <- bedfromfile(subject, name=name)
-    } else {
-      stop("Subject file doesn't exist")
-    }
-
-  }
-
-  if (!class(subject)=="GRanges") {
-    stop("Subject must be GRanges")
-  }
-
-  # SIGN <- NULL; RESULT <- NULL
-  # for (i in 1:nrow(OVERLAP.RESULT)){
-  #   if (is.null(SIGN)){
-  #     Q.flag    <- OVERLAP.RESULT[i,1]
-  #     S.numbers <- OVERLAP.RESULT[i,2]
-  #     SIGN      <- TRUE
-  #   } else {
-
-  #     if (Q.flag==OVERLAP.RESULT[i,1]){
-  #       S.numbers <- c(S.numbers, OVERLAP.RESULT[i,2])
-  #     } else {
-  #       LIST <- list(idx=Q.flag, list=S.numbers)
-  #       RESULT[[paste("flag", Q.flag, sep="-")]] <- LIST
-  #       Q.flag <- OVERLAP.RESULT[i,1]
-  #       S.numbers <- OVERLAP.RESULT[i,2]
-  #     }
-
-  #   }
-  # }
-
-  if (isTRUE(parallel)){
-
-    ## Transform grange to list
-    query.list <- split(query, 1:length(query))
-    library(BiocParallel)
-    result     <- BiocParallel::bplapply(
-      query.list, DistCalculate, subject=subject, name=name, DistIn=DistIn, strand=strand)
-
-  } else {
-
-    result <- lapply(1:length(query), function(i){
-      DistCalculate(query[i], subject=subject, name=name, DistIn=DistIn, strand=strand)
+    result <- lapply(data, function(x){
+      sum(abs(x) == dist)
     })
 
+  } else {
+    
+    if (isTRUE(intersect)) {
+
+      if (include=="all") {
+
+        result <- lapply(data, function(x){
+          sum(abs(x) < dist)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(data, function(x){
+          sum(x <= 0 & abs(x) < dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(data, function(x){
+          sum(x >= 0 & abs(x) < dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    } else {
+
+      if (include=="all") {
+
+        result <- lapply(data, function(x){
+          sum(abs(x) <= dist & abs(x) > 0)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(data, function(x){
+          sum(x < 0 & abs(x) <= dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(data, function(x){
+          sum(x > 0 & abs(x) <= dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    }
+
   }
 
-  names(result) <- data.frame(query)[,name]
+  return(unlist(result))
+
+}
+
+#' Compare the observe compile information with expect compile information by binomial distribution
+#' 
+#' @param observe The observe compile information
+#' @param expect.data The expect compile information
+#' @param parallel The number of cores to run the function
+#' @param parallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel
+#'
+#' @export
+binomialPeakCompile <- function(
+  observe, expect.data=expect.data, 
+  parallel=1, parallel.type="mclapply") {
+
+   if (!is.numeric(observe)) {
+    stop("Check the observe data")
+  }
+  
+  lapply(expect.data, function(x){
+    
+    if (!is.numeric(x)) {
+      stop("Check the expect data")
+    }
+    
+    if (!identical(names(x), names(observe))) {
+      stop("Check the names of expect and observe data")
+    }
+    
+  })
+
+  increase.logic <- lapply(expect.data, function(x){observe > x})
+  decrease.logic <- lapply(expect.data, function(x){observe < x})
+
+  if (parallel > 1) {
+
+    if (parallel.type=="mclapply") {
+
+      idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+      idx <- data.frame(
+        start = idx.num,
+        end = c(idx.num[-1]-1, length(observe)))
+
+      gc(verbose = FALSE)
+      increase.number <- parallel::mclapply(1:nrow(idx), function(x){
+
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          lapply(increase.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
+        })
+      }, mc.cores = parallel) %>% unlist()
+
+      gc(verbose = FALSE)
+      decrease.number <- parallel::mclapply(1:nrow(idx), function(x){
+
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          lapply(decrease.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
+        })
+      }, mc.cores = parallel) %>% unlist()
+
+    }
+
+  } else {
+
+    increase.number <- lapply(1:length(observe), function(x){
+        
+        lapply(increase.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+  
+    }) %>% unlist()
+
+    decrease.number <- lapply(1:length(observe), function(x){
+        
+        lapply(decrease.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+  
+    }) %>% unlist()
+
+  }
+
+  if (parallel > 1) {
+
+    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+    idx <- data.frame(
+      start = idx.num,
+      end = c(idx.num[-1]-1, length(observe)))
+    
+    if (parallel.type=="mclapply") {
+
+      gc(verbose = FALSE)
+      shuffle.mean <- parallel::mclapply(1:nrow(idx), function(x){
+
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          lapply(expect.data, function(z){z[y]}) %>% unlist() %>% mean()
+        }) %>% unlist()
+
+      }, mc.cores = parallel) %>% unlist()
+
+      gc(verbose = FALSE)
+      result <- parallel::mclapply(1:nrow(idx), function(x){
+
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          data.frame(
+            name    = names(observe)[y],
+            observe = observe[y],
+            expect  = shuffle.mean[y],
+            log2FC  = log2(observe[y]/shuffle.mean[y]),
+            upper.p = binom.test(
+              increase.number[y], length(expect.data), 0.5, alternative="greater")$p.value,
+            lower.p = binom.test(
+              decrease.number[y], length(expect.data), 0.5, alternative="greater")$p.value)
+        }) %>% Reduce(rbind, .)
+
+      }, mc.cores = parallel) %>% Reduce(rbind, .)
+
+    }
+
+  } else {
+
+    shuffle.mean <- lapply(1:length(observe), function(x){
+        
+        lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
+  
+    }) %>% unlist()
+
+    result <- lapply(1:length(observe), function(x){
+        
+        data.frame(
+          name    = names(observe)[x],
+          observe = observe[x],
+          expect  = shuffle.mean[x],
+          log2FC  = log2(observe[x]/shuffle.mean[x]),
+          upper.p = binom.test(
+            increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
+          lower.p = binom.test(
+            decrease.number[x], length(expect.data), 0.5, alternative="greater")$p.value)
+  
+    }) %>% Reduce(rbind, .)
+
+  }
+
   return(result)
 
 }
+
+#' Compare the observe compile information with expect compile information by normal distribution
+#' 
+#' @param observe A numeric vector of observe data
+#' @param expect.data A list of numeric vector of expect data
+#' @param parallel The number of cores to use
+#' @param parallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel
+#'
+#' @export
+normalDistPeakCompile <- function(
+    observe, expect.data=expect.data, 
+    parallel=1, parallel.type="mclapply"){
+  
+  if (!is.numeric(observe)) {
+    stop("Check the observe data")
+  }
+  
+  lapply(expect.data, function(x){
+    
+    if (!is.numeric(x)) {
+      stop("Check the expect data")
+    }
+    
+    if (!identical(names(x), names(observe))) {
+      stop("Check the names of expect and observe data")
+    }
+    
+  })
+  
+  if (parallel > 1) {
+
+    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+    idx <- data.frame(
+      start = idx.num,
+      end = c(idx.num[-1]-1, length(observe)))
+    
+    if (parallel.type=="mclapply") {
+      
+      gc(verbose = FALSE)
+      STAT.INFO <- parallel::mclapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          
+          lapply(expect.data, function(z){z[[y]]}) %>% unlist() %>%
+            { list(mean=mean(.), sd=sd(.)) }
+          
+        })
+        
+      }, mc.cores = parallel) %>% Reduce(c, .)
+      
+    }
+    
+  } else {
+    
+    STAT.INFO <- lapply(1:length(observe), function(x){
+      
+      lapply(expect.data, function(y){y[[x]]}) %>% unlist() %>%
+        { list(mean=mean(.), sd=sd(.)) }
+      
+    })
+    
+  }
+  
+  
+  
+  if (parallel > 1) {
+    
+    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+    idx <- data.frame(
+      start = idx.num,
+      end = c(idx.num[-1]-1, length(observe)))
+    
+    if (parallel.type=="mclapply") {
+      
+      gc(verbose = FALSE)
+      result <- parallel::mclapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          data.frame(
+            name    = names(observe)[y],
+            observe = observe[y],
+            expect  = STAT.INFO[[y]]$mean,
+            log2FC  = log2(observe[y]/STAT.INFO[[y]]$mean),
+            upper.p = pnorm(
+              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=FALSE),
+            lower.p = pnorm(
+              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=TRUE))
+        }) %>% Reduce(rbind, .)
+        
+      }, mc.cores = parallel) %>% Reduce(rbind, .)
+      
+    } else if (parallel.type=="bplapply") {
+      
+      gc(verbose = FALSE)
+      result <- parallel::bplapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          data.frame(
+            name    = names(observe)[y],
+            observe = observe[y],
+            expect  = expect.data[[y]]$mean,
+            log2FC  = log2(observe[y]/expect.data[[y]]$mean),
+            upper.p = pnorm(
+              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=FALSE),
+            lower.p = pnorm(
+              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=TRUE))
+        }) %>% Reduce(rbind, .)
+        
+      }) %>% Reduce(rbind, .)
+      
+    } else {
+      
+      stop("Check the parallel.type")
+      
+    }
+    
+    
+  } else {
+    
+    result <- lapply(1:length(observe), function(x){
+      data.frame(
+        name    = names(observe)[x],
+        observe = observe[x],
+        expect  = expect.data[[x]]$mean,
+        log2FC  = log2(observe[x]/expect.data[[x]]$mean),
+        upper.p = pnorm(
+          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=FALSE),
+        lower.p = pnorm(
+          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=TRUE))
+    }) %>% Reduce(rbind, .)
+    
+  }
+  
+  return(result)
+  
+}
+
