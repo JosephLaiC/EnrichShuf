@@ -18,3 +18,5 @@ Imports:
   stringr,
   GenomicFeatures,
   BiocParallel
+  foreach,
+  doParallel
