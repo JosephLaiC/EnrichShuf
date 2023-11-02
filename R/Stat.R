@@ -267,7 +267,6 @@ TargetFactorSTAT <- function(
 
   }
 
-
   ## Calculate the statistic
   result <- data.frame(
     observe      = observe.num,

@@ -22,7 +22,7 @@ export(ObsExpCompareByBin)
 export(ObsExpCompile)
 export(ObsExpCompileList)
 export(ObsExpCompileSTAT)
-export(ObsExpIntersectMerge)
+export(ObsExpIntersectMerge
 export(ObsExpObj)
 export(ObsExpObjEachBin)
 export(ObsExpObjEachBin_new)
