@@ -59,7 +59,7 @@ ObsExpSTAT <-  function(
   ## Check the names of observe and expect are the same
   lapply(1:length(expect), function(x){
 
-    if (!identical(names(observe), names(expect))) {
+    if (!identical(names(observe), names(expect[[x]]))) {
     
       message("Names of observed and expected objects do not match.")
 
