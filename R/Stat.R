@@ -71,11 +71,6 @@ ObsExpSTAT <-  function(
 
   })
 
-  
-  if (!all(names(observe) %in% names(expect))) {
-    stop("Please check the names of observe and expect are the same")
-  }
-
   ## Get charaters of names
   name_chr <- names(observe)
 
