@@ -1,11 +1,11 @@
 Package: EnrichShuf
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.3.0
+Title: Randomized empirical model calcilate correlation between feature and region
+Version: 0.3.1.a
 Author: Joseph Chieh-Yu Lai
 Maintainer: Joseph Chieh-Yu Lai <joe5621624@gmail.com>
-Description: This tool could be used in
-License: What license is it under?
+Description: Apply randomized empirical to calculate the comprehensive correlation between feature and region on the genome
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
@@ -17,4 +17,6 @@ Imports:
   readr,
   stringr,
   GenomicFeatures,
-  BiocParallel
+  BiocParallel,
+  foreach,
+  doParallel
