@@ -1,7 +1,7 @@
 Package: EnrichShuf
 Type: Package
 Title: Randomized empirical model calcilate correlation between feature and region
-Version: 0.3.1.a
+Version: 0.3.1a
 Author: Joseph Chieh-Yu Lai
 Maintainer: Joseph Chieh-Yu Lai <joe5621624@gmail.com>
 Description: Apply randomized empirical to calculate the comprehensive correlation between feature and region on the genome
