@@ -57,15 +57,20 @@ ObsExpSTAT <-  function(
   expect  <- data$expect
 
   ## Check the names of observe and expect are the same
-  if (!identical(names(observe), names(expect))) {
-    
-    message("Names of observed and expected objects do not match.")
+  lapply(1:length(expect), function(x){
 
-    if (!all(names(observe) %in% names(expect))) {
-      stop("Please ensure all observed names are in the expected list.")
+    if (!identical(names(observe), names(expect))) {
+    
+      message("Names of observed and expected objects do not match.")
+
+      if (!all(names(observe) %in% names(expect))) {
+        stop("Please ensure all observed names are in the expected list.")
+      }
+
     }
 
-  }
+  })
+
   
   if (!all(names(observe) %in% names(expect))) {
     stop("Please check the names of observe and expect are the same")
