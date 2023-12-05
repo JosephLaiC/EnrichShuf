@@ -44,7 +44,7 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
 #' @export
 ObsExpSTAT <-  function(
   data, log.p=FALSE, parallel=1, parallel.type="mclapply") {
-
+  
   if (!all(names(data)%in%c("observe", "expect"))) {
     stop("Please assign the result from ObsExpObj")
   }
@@ -56,54 +56,50 @@ ObsExpSTAT <-  function(
   observe <- data$observe
   expect  <- data$expect
 
-  if (parallel==1) {
+  ## Check the names of observe and expect are the same
+  lapply(1:length(expect), function(x){
+
+    if (!identical(names(observe), names(expect[[x]]))) {
     
-    result <- lapply(names(observe), function(x) {
-      numbers <-  lapply(1:length(expect), function(y)
-        expect[[y]][x]) %>% unlist()
-      mean <-  mean(numbers)
-      sd   <-  sd(numbers)
-      data.frame(
-        condition = x,
-        observe   = observe[x],
-        expect    = mean,
-        log2FC    = log2(observe[x]/mean),
-        upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-        lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+      message("Names of observed and expected objects do not match.")
+
+      if (!all(names(observe) %in% names(expect))) {
+        stop("Please ensure all observed names are in the expected list.")
+      }
+
+    }
+
+  })
+
+  ## Get charaters of names
+  name_chr <- names(observe)
+
+
+
+  if (parallel==1) {
+
+    result <- lapply(name_chr, function(x){
+
+      ObsExpSTATbyName(data, name=x, log.p=log.p)
+
     }) %>% Reduce(rbind, .)
-  
+
   } else if (parallel > 1) {
 
     if (parallel.type=="mclapply") {
 
-      result <- parallel::mclapply(names(observe), function(x) {
-        numbers <-  lapply(1:length(expect), function(y)
-          expect[[y]][x]) %>% unlist()
-        mean <-  mean(numbers)
-        sd   <-  sd(numbers)
-        data.frame(
-          condition = x,
-          observe   = observe[x],
-          expect    = mean,
-          log2FC    = log2(observe[x]/mean),
-          upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-          lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+      result <- parallel::mclapply(name_chr, function(x){
+
+        ObsExpSTATbyName(data, name=x, log.p=log.p)
+
       }, mc.cores=parallel) %>% Reduce(rbind, .)
 
     } else if (parallel.type=="bplapply") {
 
-      result <- BiocParallel::bplapply(names(observe), function(x) {
-        numbers <-  lapply(1:length(expect), function(y)
-          expect[[y]][x]) %>% unlist()
-        mean <-  mean(numbers)
-        sd   <-  sd(numbers)
-        data.frame(
-          condition = x,
-          observe   = observe[x],
-          expect    = mean,
-          log2FC    = log2(observe[x]/mean),
-          upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-          lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
+      result <- BiocParallel::bplapply(name_chr, function(x){
+
+        ObsExpSTATbyName(data, name=x, log.p=log.p)
+
       }) %>% Reduce(rbind, .)
 
     } else {
@@ -112,41 +108,8 @@ ObsExpSTAT <-  function(
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
+
   }
-
-  # if (isTRUE(parallel)) {
-
-  #   result <- BiocParallel::bplapply(names(observe), function(x) {
-  #     numbers <-  lapply(1:length(expect), function(y)
-  #       expect[[y]][x]) %>% unlist()
-  #     mean <-  mean(numbers)
-  #     sd   <-  sd(numbers)
-  #     data.frame(
-  #       condition = x,
-  #       observe   = observe[x],
-  #       expect    = mean,
-  #       log2FC    = log2(observe[x]/mean),
-  #       upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-  #       lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
-  #   }) %>% Reduce(rbind, .)
-
-  # } else {
-  
-  #   result <- lapply(names(observe), function(x) {
-  #     numbers <-  lapply(1:length(expect), function(y)
-  #       expect[[y]][x]) %>% unlist()
-  #     mean <-  mean(numbers)
-  #     sd   <-  sd(numbers)
-  #     data.frame(
-  #       condition = x,
-  #       observe   = observe[x],
-  #       expect    = mean,
-  #       log2FC    = log2(observe[x]/mean),
-  #       upper.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
-  #       lower.p   = pnorm(observe[x], mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
-  #   }) %>% Reduce(rbind, .)
-
-  # }
 
   return(result)
 
@@ -266,7 +229,6 @@ TargetFactorSTAT <- function(
       sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
 
   }
-
 
   ## Calculate the statistic
   result <- data.frame(
