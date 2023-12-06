@@ -2,7 +2,8 @@
 % Please edit documentation in R/CompilePeak.R
 \name{ShufFactorElementCorObj}
 \alias{ShufFactorElementCorObj}
-\title{Compile the associated factors to each element with distance information by shuffle factors}
+\title{Shuffle factors across the genome, then associate them to each element with specified distance, 
+and compile the information to an object.}
 \usage{
 ShufFactorElementCorObj(
   element,
@@ -18,26 +19,33 @@ ShufFactorElementCorObj(
 )
 }
 \arguments{
-\item{element}{The element file with bed format}
+\item{element}{Input the element data.frame or the path to bed file.}
 
-\item{factor}{The factor file with bed format}
+\item{factor}{Input the factor data.frame or the path to the bed file.}
 
-\item{dist}{The distance to define the associated factors}
+\item{dist}{Distance information for associating factors to each element.}
 
-\item{strand}{The strand information of element file}
+\item{strand}{If set to TRUE, it means that the input element contains strand information in column 6, 
+and the analysis will take the strand information into consideration.}
 
-\item{parallel}{The number of cores to run the function}
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
 
-\item{parallel.type}{The type of parallel}
+\item{parallel.type}{Could be specify one of: \cr
+\cr
+"mclapply" - Apply malapply to perform the run in parallel.\cr
+\cr
+"bplapply" - Apply bplapply to perfrom the run in parallel.}
 
-\item{genome}{The genome information}
+\item{genome}{This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+Each name-size pair should be listed on a separate line and delimited by a tab.}
 
-\item{incl}{The included chromosomes}
+\item{incl}{The interval information to include the input regions.}
 
-\item{excl}{The excluded chromosomes}
+\item{excl}{The interval information to exclude the input regions.}
 
-\item{seed}{The seed number}
+\item{seed}{A number used to initialize the random character generator in R, ensuring consistent results.}
 }
 \description{
-Compile the associated factors to each element with distance information by shuffle factors
+Shuffle factors across the genome, then associate them to each element with specified distance, 
+and compile the information to an object.
 }

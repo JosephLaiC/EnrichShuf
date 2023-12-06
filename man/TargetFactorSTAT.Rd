@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stat.R
 \name{TargetFactorSTAT}
 \alias{TargetFactorSTAT}
-\title{Associate factors to elements in a total list and calculate the significance}
+\title{Determine significance by associating factors with elements in the complete list.}
 \usage{
 TargetFactorSTAT(
   factor,
@@ -15,24 +15,24 @@ TargetFactorSTAT(
 )
 }
 \arguments{
-\item{factor}{A character vector of factors.}
+\item{factor}{Characters determined as factors.}
 
-\item{total}{A character vector of total elements.}
+\item{total}{The complete list is utilized to extract randomized factors for calculating significance.}
 
-\item{element}{A character vector of elements to be associated.}
+\item{element}{Characters determined as element.}
 
-\item{random.num}{Number of random times to get expect result.}
+\item{random.num}{Times of randomization.}
 
-\item{log.p}{If TRUE, will log2 the p.value.}
+\item{log.p}{If set to TRUE, the logarithm of the p-value will be returned.}
 
-\item{parallel}{If TRUE, will use parallel to calculate.}
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
 
 \item{parallel.type}{Could be specify one of: \cr
 \cr
-"mclapply" - Use mclapply to run in parallel\cr
+"mclapply" - Apply malapply to perform the run in parallel.\cr
 \cr
-"bplapply" - Use BiocParallel to run in parallel}
+"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
-Associate factors to elements in a total list and calculate the significance
+Determine significance by associating factors with elements in the complete list.
 }

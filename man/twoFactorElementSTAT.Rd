@@ -2,7 +2,8 @@
 % Please edit documentation in R/Stat.R
 \name{twoFactorElementSTAT}
 \alias{twoFactorElementSTAT}
-\title{Associate two factors in elements and calculate the significance}
+\title{Associate two interval-based factors on the genome within elements, 
+compute their correlation, and determine their statistical significance.}
 \usage{
 twoFactorElementSTAT(
   factorA = NULL,
@@ -19,26 +20,36 @@ twoFactorElementSTAT(
 )
 }
 \arguments{
-\item{factorA}{A bed information of factorA.}
+\item{factorA}{A path to a bed file or an intervals information, determine as factorA.}
 
-\item{factorA.min}{Minimum distance of element to factorA.}
+\item{factorA.min}{Minimum distance of factorA to element. 
+If factorA falls within this range of distances, it will be included.}
 
-\item{factorA.max}{Maximum distance of element to factorA}
+\item{factorA.max}{Maximum distance of factorA to element. If factorA falls within this range of distances, it will be included.}
 
-\item{factorB}{A bed information of factorB.}
+\item{factorB}{A path to a bed file or an intervals information, determine as factorB.}
 
-\item{factorB.min}{Minimum distance of element to factorB.}
+\item{factorB.min}{Minimum distance of factorB to element. 
+If factorB falls within this range of distances, it will be included.}
 
-\item{factorB.max}{Maximum distance of element to factorB.}
+\item{factorB.max}{Maximum distance of factorB to element. 
+If factorB falls within this range of distances, it will be included.}
 
-\item{element}{A bed information of elements.}
+\item{element}{A path to a bed file or an intervals information, determine as element.}
 
-\item{random.num}{Number of random times to get expect result.}
+\item{random.num}{Times of randomization.}
 
-\item{log.p}{If TRUE, will log2 the p.value.}
+\item{log.p}{If set to TRUE, the logarithm of the p-value will be returned.}
 
-\item{parallel}{If TRUE, will use parallel to calculate.}
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
+
+\item{parallel.type}{Could be specify one of: \cr
+\cr
+"mclapply" - Apply malapply to perform the run in parallel.\cr
+\cr
+"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
-Associate two factors in elements and calculate the significance
+Associate two interval-based factors on the genome within elements, 
+compute their correlation, and determine their statistical significance.
 }

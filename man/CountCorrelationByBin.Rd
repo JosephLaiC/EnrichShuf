@@ -14,22 +14,28 @@ CountCorrelationByBin(
 )
 }
 \arguments{
-\item{data}{Input data.frame or compressed/uncompressed data. Data should output from RegionAnnoFromData, contain the information of
-name (1st column); $tag_region (2nd column); $tag_type (3rd column); $tag_dist (4th column)}
+\item{data}{Input data.frame or compressed/uncompressed file. 
+Data should be in the format outputted by RegionAnnoFromData . It contain the information of: \cr
+\cr
+column 1: Name of the interval for the input factor. \cr
+column 2: Name of the interval for the input element. \cr
+column 3: Relative position information of factors with respect to the nearest element. \cr
+column 4: Distance from the factors to the nearest element.}
 
-\item{intersect}{If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row}
+\item{intersect}{If set to TRUE, the output result will place the number of intersecting peaks 
+(where column 4's "distance" is equal to 0) in the first row.}
 
-\item{bin}{Interval size of each window.}
+\item{bin}{Interval size of each window..}
 
 \item{min}{Minimum number of conditions}
 
 \item{max}{Maximum number of conditions}
 
-\item{type}{Could be specify one of: \cr
+\item{type}{Could be specify: \cr
 \cr
-"continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+"continue" - Output a string of intervals with the range of distances between 0 and a series of consecutive numbers. \cr
 \cr
-"within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
+"eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.}
 }
 \description{
 Input the correlated (annotation) data and count the number of each condition by bins. (e.g. intersect or with specific distances)

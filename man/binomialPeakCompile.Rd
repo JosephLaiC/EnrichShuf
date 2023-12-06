@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompilePeak.R
 \name{binomialPeakCompile}
 \alias{binomialPeakCompile}
-\title{Compare the observe compile information with expect compile information by binomial distribution}
+\title{Compare the observed compilation information with the expected compilation information using a binomial distribution.}
 \usage{
 binomialPeakCompile(
   observe,
@@ -12,18 +12,18 @@ binomialPeakCompile(
 )
 }
 \arguments{
-\item{observe}{The observe compile information}
+\item{observe}{The observe compile information.}
 
-\item{expect.data}{The expect compile information}
+\item{expect.data}{The expect compile information. Typically will be a list.}
 
-\item{parallel}{The number of cores to run the function}
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
 
 \item{parallel.type}{Could be specify one of: \cr
 \cr
-"mclapply" - Use mclapply to run in parallel\cr
+"mclapply" - Apply malapply to perform the run in parallel.\cr
 \cr
-"bplapply" - Use BiocParallel to run in parallel}
+"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
-Compare the observe compile information with expect compile information by binomial distribution
+Compare the observed compilation information with the expected compilation information using a binomial distribution.
 }
