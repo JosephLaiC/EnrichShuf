@@ -1,9 +1,11 @@
 
-#' Calculate the p-value of observed number of peaks in the expect distribution
+#' Calculate the p-value by comparing the observed value to an empirical model constructed from 
+#' expected values with specific range of distances (condition).
 #' 
-#' @param data The input data contained the information of expect distribution or observe number.
-#' @param name The name of condition to be calculated.
-#' @param log.p If TRUE, the log of p-value will be returned.
+#' @param data The input object contained the information of observed and expected number.
+#' @param name A character used to extract a specific object for calculating significance by comparing observed 
+#' values with empirical models built from expected values.
+#' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
 #' 
 #' @export
 ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
@@ -30,16 +32,17 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
 
 }
 
-#' Calculate the p-value of observed number of peaks in the expect distribution
+#' Calculate the p-value by comparing the observed value to an empirical model constructed 
+#' from expected values with each range of distances (condition).
 #' 
-#' @param data The input data contained the information of expect distribution or observe number.
+#' @param data The input object contained the information of observed and expected number.
 #' @param log.p If TRUE, the log of p-value will be returned.
-#' @param parallel If assign number > 1, the function will run in parallel
-#' @param parallel.type  Could be specify one of: \cr
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel 
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpSTAT <-  function(
@@ -115,11 +118,11 @@ ObsExpSTAT <-  function(
 
 }
 
-#' Randomly select factors from a list.
+#' Randomly select a character from a character list.
 #' 
-#' @param list A character vector.
-#' @param seed Seed number.
-#' @param n Number of factors to select.
+#' @param list The input list contained characters.
+#' @param seed A number used to initialize the random character generator in R, ensuring consistent results.
+#' @param n Number of characters to select.
 #' 
 #' @export
 randomFactor <- function(list, seed=1, n=NULL) {
@@ -137,19 +140,19 @@ randomFactor <- function(list, seed=1, n=NULL) {
 
 }
 
-#' Associate factors to elements in a total list and calculate the significance
+#' Determine significance by associating factors with elements in the complete list.
 #' 
-#' @param factor A character vector of factors.
-#' @param total A character vector of total elements.
-#' @param element A character vector of elements to be associated.
-#' @param random.num Number of random times to get expect result.
-#' @param log.p If TRUE, will log2 the p.value.
-#' @param parallel If TRUE, will use parallel to calculate.
-#' @param parallel.type  Could be specify one of: \cr
+#' @param factor Characters determined as factors.
+#' @param total The complete list is utilized to extract randomized factors for calculating significance.
+#' @param element Characters determined as element.
+#' @param random.num Times of randomization.
+#' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 TargetFactorSTAT <- function(
@@ -244,99 +247,27 @@ TargetFactorSTAT <- function(
 }
 
 
-# FactorElementSTAT <- function(
-#   factor=NULL, factor.min=0, factor.max=0, 
-#   element=NULL, name.list=NULL, random.num=10000, log.p=FALSE, parallel=FALSE) {
-
-#   if (is.null(factor)) {
-#     stop("Please assign a character to factor")
-#   }
-
-
-#   if (is.null(element)) {
-#     stop("Please assign a character to element")
-#   }
-
-#   ##  Check the number of min and max
-#   if (!all(is.numeric(factor.min), is.numeric(factor.max))) {
-#     stop("Please assign a number to factorA.min, factorA.max, factorB.min, factorB.max")
-#   }
-
-#   if (all(factor.min==0, factor.max==0)) {
-    
-#     factor.intersect <- TRUE
- 
-#   } else {
-
-#     if (factor.min > factor.max) {
-#       stop("factorA.min should be smaller than factorA.max")
-#     } 
-
-#     factor.intersect <- FALSE
-
-#   }
-
-#   if (is.character(element)) {
-
-#     if (file.exists(element)) {
-#       element <- valr::read_bed(element)
-#     } else {
-#       stop("Please assign a valid file path")
-#     }
-
-#   } else {
-
-#     if (!is.data.frame(element)) {
-#       stop("Please check the input element")
-#     }
-
-#   }
-
-#   element.list <- unique(data.frame(element)[,4])
-
-#   element.factor <- FactorElementCorrelate(
-#     factor  = element, 
-#     element = factor, 
-#     tag     = "A")
-
-#   if (isTRUE(factor.intersect)) {
-
-#     factor.list <- unique(element.factor[element.factor[,4]==0,1])
-
-#   } else {
-
-#     factor.list <- unique(element.factor[
-#       element.factor[,4]>factor.min & element.factor[,4]<=factor.max,1])
-
-#   }
-
-#   result <- TargetFactorSTAT(
-#     factor     = factor.list, 
-#     total      = element.list, 
-#     element    = name.list, 
-#     random.num = random.num, 
-#     log.p      = log.p, 
-#     parallel  = parallel)
-
-#   return(result)
-
-# }
-
-
-
-
-#' Associate two factors in elements and calculate the significance
+#' Associate two interval-based factors on the genome within elements, 
+#' compute their correlation, and determine their statistical significance.
 #' 
-#' @param factorA A bed information of factorA.
-#' @param factorA.min Minimum distance of element to factorA.
-#' @param factorA.max Maximum distance of element to factorA
-#' @param factorB A bed information of factorB.
-#' @param factorB.min Minimum distance of element to factorB.
-#' @param factorB.max Maximum distance of element to factorB.
-#' @param element A bed information of elements.
-#' @param random.num Number of random times to get expect result.
-#' @param log.p If TRUE, will log2 the p.value.
-#' @param parallel If TRUE, will use parallel to calculate.
+#' @param factorA A path to a bed file or an intervals information, determine as factorA.
+#' @param factorA.min Minimum distance of factorA to element. 
+#' If factorA falls within this range of distances, it will be included.
+#' @param factorA.max Maximum distance of factorA to element. If factorA falls within this range of distances, it will be included.
+#' @param factorB A path to a bed file or an intervals information, determine as factorB.
+#' @param factorB.min Minimum distance of factorB to element. 
+#' If factorB falls within this range of distances, it will be included.
+#' @param factorB.max Maximum distance of factorB to element. 
+#' If factorB falls within this range of distances, it will be included.
+#' @param element A path to a bed file or an intervals information, determine as element.
+#' @param random.num Times of randomization.
+#' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
+#' \cr
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 twoFactorElementSTAT <- function(

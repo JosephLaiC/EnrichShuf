@@ -1,10 +1,17 @@
 
-#' Compile the associated factors to each element with distance information
+#' Associate the factors to each element with specified distance, and compile the information to an object.
 #' 
-#' @param element The element file with bed format
-#' @param factor The factor file with bed format
-#' @param dist The distance to the element for collection
-#' @param strand If TRUE, modified the dist with strand information
+#' @param element Input the element data.frame or the path to bed file.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param dist Distance information for associating factors to each element.
+#' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
+#' \cr
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 FactorElementCorObj <- function(
@@ -243,18 +250,25 @@ FactorElementCorObj <- function(
   
 }
 
-#' Compile the associated factors to each element with distance information by shuffle factors
+#' Shuffle factors across the genome, then associate them to each element with specified distance, 
+#' and compile the information to an object.
 #' 
-#' @param element The element file with bed format
-#' @param factor The factor file with bed format
-#' @param dist The distance to define the associated factors
-#' @param strand The strand information of element file
-#' @param parallel The number of cores to run the function
-#' @param parallel.type The type of parallel
-#' @param genome The genome information
-#' @param incl The included chromosomes
-#' @param excl The excluded chromosomes
-#' @param seed The seed number
+#' @param element Input the element data.frame or the path to bed file.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param dist Distance information for associating factors to each element.
+#' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
+#' \cr
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
+#' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+#' Each name-size pair should be listed on a separate line and delimited by a tab.
+#' @param incl The interval information to include the input regions.
+#' @param excl The interval information to exclude the input regions.
+#' @param seed 	A number used to initialize the random character generator in R, ensuring consistent results.
 #' 
 #' @export
 ShufFactorElementCorObj <- function(
@@ -334,18 +348,18 @@ ShufFactorElementCorObj <- function(
 
 }
 
-#' Transform the data contained associated factors to each element with distance to a data list
+#' Transform the data, which includes associated factors for each element along with their distances, into a data list.
 #' 
-#' @param data The data contained associated factors to each element with distance
-#' @param dist The distance to define the associated factors
-#' @param intersect If  TRUE, results will be the number of elements that intersect with the factor
+#' @param data The data included factors associated with each element, along with their distances.
+#' @param dist Distance to include associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
 #' @param include Could be specified one of the: \cr
 #' \cr
-#' "all" - Include all the elements that intersect with the factor. \cr
+#' "all" - Include all factors associated with elements. \cr
 #' \cr
-#' "upstream" - Include all the elements that at the upstream of the factor. \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
 #' \cr
-#' "downstream" - Include all the elements that at the downstream of the factor.
+#' "downstream" -  Include all factors associated with elements at downstream.
 #' 
 #' @export
 CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
@@ -414,16 +428,16 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
 }
 
-#' Compare the observe compile information with expect compile information by binomial distribution
+#' Compare the observed compilation information with the expected compilation information using a binomial distribution.
 #' 
-#' @param observe The observe compile information
-#' @param expect.data The expect compile information
-#' @param parallel The number of cores to run the function
-#' @param parallel.type  Could be specify one of: \cr
+#' @param observe The observe compile information.
+#' @param expect.data The expect compile information. Typically will be a list.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #'
 #' @export
 binomialPeakCompile <- function(
