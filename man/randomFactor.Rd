@@ -2,17 +2,17 @@
 % Please edit documentation in R/Stat.R
 \name{randomFactor}
 \alias{randomFactor}
-\title{Randomly select factors from a list.}
+\title{Randomly select a character from a character list.}
 \usage{
 randomFactor(list, seed = 1, n = NULL)
 }
 \arguments{
-\item{list}{A character vector.}
+\item{list}{The input list contained characters.}
 
-\item{seed}{Seed number.}
+\item{seed}{A number used to initialize the random character generator in R, ensuring consistent results.}
 
-\item{n}{Number of factors to select.}
+\item{n}{Number of characters to select.}
 }
 \description{
-Randomly select factors from a list.
+Randomly select a character from a character list.
 }

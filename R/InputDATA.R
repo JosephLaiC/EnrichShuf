@@ -1,10 +1,12 @@
-#' Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.
+#' Input factors and associate them with elements. The output data.frame contains information 
+#' about factors and their nearest elements with the distance.
 #' 
-#' @param factor input the factor data.frame or the path to bed file.
-#' @param element input the element data.frame or the path to bed file.
-#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
-#' @param tag if assign as TRUE means output the tag information in the analysis.
-#' @param outloc The location of output file.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param element Input the element data.frame or the path to bed file.
+#' @param strand If set to TRUE, it means that the input element contains strand information 
+#' in column 6, and the analysis will take the strand information into consideration.
+#' @param tag If a character is assigned, the tag information will be outputted in the final table column.
+#' @param outloc The location of the output file.
 #' 
 #' @export 
 FactorElementCorrelate <- function(
@@ -190,44 +192,20 @@ FactorElementCorrelate <- function(
   
 }
 
-# Under developed
-# ExpShuffleFactor <- function(
-#   factor, tag=FALSE, outloc=NULL, 
-#   genome=genome, incl=NULL, excl=NULL, seed=1) {
-
-#   if (is.character(factor)) {
-    
-#     if (!file.exists(factor)) {
-#       stop("Check the factor file exsist in path")
-#     }
-    
-#     factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
-    
-#   } else if (is.data.frame(factor)) {
-    
-#     factor <- factor[,1:4]
-    
-#   } else if (class(factor)[[1]]=="GRanges") {
-    
-#     stop("Element format is GRanges, please convert it to data.frame with bed format")
-    
-#   } else {
-#     stop("Check the factor format")
-#   }
-
-# }
-
-#' Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.
+#' The input factors are shuffled and associated with elements. 
+#' The output data.frame contains information about the random shuffle factors and their nearest elements with the distance.
 #' 
-#' @param factor input the factor data.frame or the path to bed file.
-#' @param element input the element data.frame or the path to bed file.
-#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
-#' @param tag if assign as TRUE means output the tag information in the analysis.
-#' @param outloc The location of output file.
-#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
-#' @param incl The interval information contained included regions.
-#' @param excl The interval information contained excluded regions.
-#' @param seed The seed number for shuffle.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param element Input the element data.frame or the path to bed file.
+#' @param strand 	If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param tag If a character is assigned, the tag information will be outputted in the final table column.
+#' @param outloc The location of the output file.
+#' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+#' Each name-size pair should be listed on a separate line and delimited by a tab.
+#' @param incl The interval information to include the input regions.
+#' @param excl The interval information to exclude the input regions.
+#' @param seed A number used to initialize the random character generator in R, ensuring consistent results.
 #' 
 #' @export 
 FactorShufCorrelate <- function(
@@ -301,15 +279,21 @@ FactorShufCorrelate <- function(
 }
 
 
-#' Input the correlated (annotation) data
+#' Input the data processed by `RegionAnnoFromData`` and tally the occurrences for each condition 
+#' (e.g., intersections or specific distance ranges).
 #'
-#' Input the correlated (annotation) data and count the number of each condition. (e.g. intersect or with specific distances)
-#'
-#' @param data Input data.frame or compressed/uncompressed data. Data should output from RegionAnnoFromData, contain the information of
-#' name (1st column); $tag_region (2nd column); $tag_type (3rd column); $tag_dist (4th column)
-#' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
-#' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
-#'
+#' @param data Input data.frame or compressed/uncompressed file. 
+#' Data should be in the format outputted by RegionAnnoFromData . It contain the information of: \cr
+#' \cr
+#' column 1: Name of the interval for the input factor. \cr
+#' column 2: Name of the interval for the input element. \cr
+#' column 3: Relative position information of factors with respect to the nearest element. \cr
+#' column 4: Distance from the factors to the nearest element.
+#' @param intersect If set to TRUE, the output result will place the number of intersecting peaks 
+#' (where column 4's "distance" is equal to 0) in the first row.
+#' @param condition A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the 
+#' occurrences for each condition (e.g., intersections or specific distance ranges).
+#' 
 #' @export
 CountCorrelation <- function(
     data, intersect=TRUE,
@@ -359,16 +343,17 @@ CountCorrelation <- function(
 }
 
 
-#' Get the intervals from min to max by bins.
+#' Given the input of bin size, minimum, and maximum values, generate intervals from the minimum to the maximum in specified bin increments. 
+#' This string could be used in counting the occurrences of factors with associated elements.
 #'
-#' @param bin Interval size of each window.
+#' @param bin Interval size of each window..
 #' @param min Minimum number of conditions
 #' @param max Maximum number of conditions
 #' @param type Could be specify: \cr
 #' \cr
-#' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+#' "continue" - Output a string of intervals with the range of distances between 0 and a series of consecutive numbers. \cr
 #' \cr
-#' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
+#' "eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.
 #'
 #' @export
 BinsDefine <- function(bin=NULL, min=NULL, max=NULL, type=NULL){
@@ -402,17 +387,23 @@ BinsDefine <- function(bin=NULL, min=NULL, max=NULL, type=NULL){
 #'
 #' Input the correlated (annotation) data and count the number of each condition by bins. (e.g. intersect or with specific distances)
 #'
-#' @param data Input data.frame or compressed/uncompressed data. Data should output from RegionAnnoFromData, contain the information of
-#' name (1st column); $tag_region (2nd column); $tag_type (3rd column); $tag_dist (4th column)
-#' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
-#' @param bin Interval size of each window.
+#' @param data Input data.frame or compressed/uncompressed file. 
+#' Data should be in the format outputted by RegionAnnoFromData . It contain the information of: \cr
+#' \cr
+#' column 1: Name of the interval for the input factor. \cr
+#' column 2: Name of the interval for the input element. \cr
+#' column 3: Relative position information of factors with respect to the nearest element. \cr
+#' column 4: Distance from the factors to the nearest element.
+#' @param intersect If set to TRUE, the output result will place the number of intersecting peaks 
+#' (where column 4's "distance" is equal to 0) in the first row.
+#' @param bin Interval size of each window..
 #' @param min Minimum number of conditions
 #' @param max Maximum number of conditions
-#' @param type Could be specify one of: \cr
+#' @param type Could be specify: \cr
 #' \cr
-#' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+#' "continue" - Output a string of intervals with the range of distances between 0 and a series of consecutive numbers. \cr
 #' \cr
-#' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
+#' "eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.
 #'
 #' @export
 CountCorrelationByBin <- function(
@@ -424,25 +415,30 @@ CountCorrelationByBin <- function(
 
 }
 
-#' Create the object contained the information of observe and expect.
+#' Input the data processed by `RegionAnnoFromData` and tally the occurrences for each condition 
+#' (e.g., intersections or specific distance ranges) build by `BinsDefine`.
 #' 
-#' @param factor input the factor data frame or the path to bed file.
-#' @param element input the element data frame or the path to bed file.
-#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
-#' @param tag if assign as TRUE means output the tag information in the analysis.
-#' @param outloc The location of output file.
-#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
-#' @param incl The interval information contained included regions.
-#' @param excl The interval information contained excluded regions.
-#' @param random.n Times of shuffle.
-#' @param intersect If assign as TRUE, result will contained intersect number.
-#' @param condition Range of distance to nearest factor. Two number saperate by "-".
-#' @param parallel If assign number > 1, the function will run in parallel
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param element Input the element data.frame or the path to bed file.
+#' @param strand 	If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param tag If a character is assigned, the tag information will be outputted in the final table column.
+#' @param outloc The location of the output file.
+#' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+#' Each name-size pair should be listed on a separate line and delimited by a tab.
+#' @param incl The interval information to include the input regions.
+#' @param excl The interval information to exclude the input regions.
+#' @param random.n Times of randomization.
+#' @param intersect If set to TRUE, the output result will place the number of intersecting peaks 
+#' (where column 4's "distance" is equal to 0) in the first row.
+#' @param condition 	A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the occurrences for each condition 
+#' (e.g., intersections or specific distance ranges).
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
 #' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpObj <- function(
@@ -617,32 +613,36 @@ ObsExpObj <- function(
 }
 
 
+#' 
 #' Create the object contained the information of observe and expect by each bin.
 #' 
-#' @param factor input the factor data frame or the path to bed file.
-#' @param element input the element data frame or the path to bed file.
-#' @param strand if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.
-#' @param tag if assign as TRUE means output the tag information in the analysis.
-#' @param outloc The location of output file.
-#' @param genome The genome information, could be the path to genome file or data frame contained the genome information.
-#' @param incl The interval information contained included regions.
-#' @param excl The interval information contained excluded regions.
-#' @param random.n Times of shuffle.
-#' @param intersect If assign as TRUE, result will contained intersect number.
-#' @param bin Interval size of each window.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param element Input the element data.frame or the path to bed file.
+#' @param strand 	If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param tag If a character is assigned, the tag information will be outputted in the final table column.
+#' @param outloc The location of the output file.
+#' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+#' Each name-size pair should be listed on a separate line and delimited by a tab.
+#' @param incl The interval information to include the input regions.
+#' @param excl The interval information to exclude the input regions.
+#' @param random.n Times of randomization.
+#' @param intersect If set to TRUE, the output result will place the number of intersecting peaks 
+#' (where column 4's "distance" is equal to 0) in the first row.
+#' @param bin Interval size of each window..
 #' @param min Minimum number of conditions
 #' @param max Maximum number of conditions
-#' @param count.type Could be specify one of: \cr
+#' @param type Could be specify: \cr
 #' \cr
-#' "continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+#' "continue" - Output a string of intervals with the range of distances between 0 and a series of consecutive numbers. \cr
 #' \cr
-#' "within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}
-#' @param parallel If assign number > 1, the function will run in parallel
+#' "eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
 #' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel 
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpObjEachBin <- function(

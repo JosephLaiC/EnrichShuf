@@ -11,7 +11,7 @@
 #' @param excl The interval information contained excluded regions.
 #' @param seed The seed number for shuffle.
 #' 
-#' @export 
+#' @noRd
 FactorShufCorrelate_new <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, seed=1) {
@@ -103,7 +103,7 @@ FactorShufCorrelate_new <- function(
 #' \cr
 #' "bplapply" - Use BiocParallel to run in parallel
 #' 
-#' @export
+#' @noRd
 ObsExpObj_new <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
@@ -302,7 +302,7 @@ ObsExpObj_new <- function(
 #' \cr
 #' "bplapply" - Use BiocParallel to run in parallel 
 #' 
-#' @export
+#' @noRd
 ObsExpObjEachBin_new <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,

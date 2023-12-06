@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompilePeak.R
 \name{FactorElementCorObj}
 \alias{FactorElementCorObj}
-\title{Compile the associated factors to each element with distance information}
+\title{Associate the factors to each element with specified distance, and compile the information to an object.}
 \usage{
 FactorElementCorObj(
   element,
@@ -14,14 +14,23 @@ FactorElementCorObj(
 )
 }
 \arguments{
-\item{element}{The element file with bed format}
+\item{element}{Input the element data.frame or the path to bed file.}
 
-\item{factor}{The factor file with bed format}
+\item{factor}{Input the factor data.frame or the path to the bed file.}
 
-\item{dist}{The distance to the element for collection}
+\item{dist}{Distance information for associating factors to each element.}
 
-\item{strand}{If TRUE, modified the dist with strand information}
+\item{strand}{If set to TRUE, it means that the input element contains strand information in column 6, 
+and the analysis will take the strand information into consideration.}
+
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
+
+\item{parallel.type}{Could be specify one of: \cr
+\cr
+"mclapply" - Apply malapply to perform the run in parallel.\cr
+\cr
+"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
-Compile the associated factors to each element with distance information
+Associate the factors to each element with specified distance, and compile the information to an object.
 }

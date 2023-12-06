@@ -2,7 +2,7 @@
 #'
 #' @param grange input grange
 #'
-#' @export
+#' @noRd
 ExtractStartEnd <- function(grange, strand=NULL){
 
   if (length(grange)>1){
@@ -45,7 +45,7 @@ ExtractStartEnd <- function(grange, strand=NULL){
 #' @param DistIn assign the distance threshold
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#' @noRd
 DistCalculate <- function(
     query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=NULL, verbose=FALSE){
 
@@ -145,7 +145,7 @@ DistCalculate <- function(
 #' @param save if assign TRUE, the function will save the result
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#' @noRd
 CompilePeak <- function(
   query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=NULL){
 
@@ -226,4 +226,147 @@ CompilePeak <- function(
   names(result) <- data.frame(query)[,name]
   return(result)
 
+}
+
+#' Compare the observe compile information with expect compile information by normal distribution
+#' 
+#' @param observe A numeric vector of observe data
+#' @param expect.data A list of numeric vector of expect data
+#' @param parallel The number of cores to use
+#' @param parallel.type  Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Use mclapply to run in parallel\cr
+#' \cr
+#' "bplapply" - Use BiocParallel to run in parallel
+#'
+#' @noRd
+normalDistPeakCompile <- function(
+    observe, expect.data=expect.data, 
+    parallel=1, parallel.type="mclapply"){
+  
+  if (!is.numeric(observe)) {
+    stop("Check the observe data")
+  }
+  
+  lapply(expect.data, function(x){
+    
+    if (!is.numeric(x)) {
+      stop("Check the expect data")
+    }
+    
+    if (!identical(names(x), names(observe))) {
+      stop("Check the names of expect and observe data")
+    }
+    
+  })
+  
+  if (parallel > 1) {
+
+    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+    idx <- data.frame(
+      start = idx.num,
+      end = c(idx.num[-1]-1, length(observe)))
+    
+    if (parallel.type=="mclapply") {
+      
+      gc(verbose = FALSE)
+      STAT.INFO <- parallel::mclapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          
+          lapply(expect.data, function(z){z[[y]]}) %>% unlist() %>%
+            { list(mean=mean(.), sd=sd(.)) }
+          
+        })
+        
+      }, mc.cores = parallel) %>% Reduce(c, .)
+      
+    }
+    
+  } else {
+    
+    STAT.INFO <- lapply(1:length(observe), function(x){
+      
+      lapply(expect.data, function(y){y[[x]]}) %>% unlist() %>%
+        { list(mean=mean(.), sd=sd(.)) }
+      
+    })
+    
+  }
+  
+  
+  
+  if (parallel > 1) {
+    
+    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
+    idx <- data.frame(
+      start = idx.num,
+      end = c(idx.num[-1]-1, length(observe)))
+    
+    if (parallel.type=="mclapply") {
+      
+      gc(verbose = FALSE)
+      result <- parallel::mclapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          data.frame(
+            name    = names(observe)[y],
+            observe = observe[y],
+            expect  = STAT.INFO[[y]]$mean,
+            log2FC  = log2(observe[y]/STAT.INFO[[y]]$mean),
+            upper.p = pnorm(
+              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=FALSE),
+            lower.p = pnorm(
+              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=TRUE))
+        }) %>% Reduce(rbind, .)
+        
+      }, mc.cores = parallel) %>% Reduce(rbind, .)
+      
+    } else if (parallel.type=="bplapply") {
+      
+      gc(verbose = FALSE)
+      result <- parallel::bplapply(1:nrow(idx), function(x){
+        
+        start <- idx[x,1]; end <- idx[x,2]
+        lapply(start:end, function(y){
+          data.frame(
+            name    = names(observe)[y],
+            observe = observe[y],
+            expect  = expect.data[[y]]$mean,
+            log2FC  = log2(observe[y]/expect.data[[y]]$mean),
+            upper.p = pnorm(
+              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=FALSE),
+            lower.p = pnorm(
+              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=TRUE))
+        }) %>% Reduce(rbind, .)
+        
+      }) %>% Reduce(rbind, .)
+      
+    } else {
+      
+      stop("Check the parallel.type")
+      
+    }
+    
+    
+  } else {
+    
+    result <- lapply(1:length(observe), function(x){
+      data.frame(
+        name    = names(observe)[x],
+        observe = observe[x],
+        expect  = expect.data[[x]]$mean,
+        log2FC  = log2(observe[x]/expect.data[[x]]$mean),
+        upper.p = pnorm(
+          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=FALSE),
+        lower.p = pnorm(
+          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=TRUE))
+    }) %>% Reduce(rbind, .)
+    
+  }
+  
+  return(result)
+  
 }

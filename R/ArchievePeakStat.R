@@ -5,7 +5,7 @@
 #' @param observe Observe info.
 #' @param expect Expect info.
 #' 
-#' @export
+#' @noRd
 ObsExpCompile <- function(expect, observe=observe) {
 
   peak.set <- observe
@@ -27,7 +27,7 @@ ObsExpCompile <- function(expect, observe=observe) {
 #' @param parallel If TRUE, will apply bapply to run the process.
 #' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
 #' 
-#' @export
+#' @noRd
 ObsExpCompileList <- function(
   expect, observe=observe, parallel=FALSE, expect.name=NULL) {
   
@@ -70,7 +70,7 @@ ObsExpCompileList <- function(
 #' @param dist Distance to calculate the number of peaks.
 #' @param intersect If TRUE, will extract the distance smaller than dist. If FALSE, will extract the distance larger than 0 and smaller than dist.
 #' 
-#' @export
+#' @noRd
 ExtractDistance <- function(data, dist=dist, intersect=TRUE) {
 
   if (isTRUE(intersect)) {
@@ -92,7 +92,7 @@ ExtractDistance <- function(data, dist=dist, intersect=TRUE) {
 #' @param expect.name list of name for expect results. If NULL, will assign as "Shuffle_1", "Shuffle_2"...
 #' @param intersect If TRUE, will extract the distance smaller than dist. If FALSE, will extract the distance larger than 0 and smaller than dist.
 #' 
-#' @export
+#' @noRd
 ObsExpRDS <- function(
   shuffleRDS, observeRDS=observeRDS, dist=1000000, parallel=FALSE, expect.name=NULL, intersect=TRUE) {
 
@@ -163,7 +163,7 @@ ObsExpRDS <- function(
 #' @param type The type of statistic. Could be "binomial", "exact_2tail", "exact_sample_compare", "exact_deviance", "exact_binomial".
 #' @param parallel If TRUE, will apply bapply to run the process.
 #' 
-#' @export
+#' @noRd
 ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
 
   if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
@@ -273,7 +273,7 @@ ObsExpCompileSTAT <- function(data, type=NULL, parallel=FALSE) {
 #' 
 #' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS.
 #' 
-#' @export
+#' @noRd
 ObsExpBinomTable <- function(data) {
 
   if (!all(c("observe", "expect", "log2FC")%in%names(data))) {
@@ -301,7 +301,7 @@ ObsExpBinomTable <- function(data) {
 #' @param n The number of bins to perform the binomial test.
 #' @param parallel If TRUE, use BiocParallel to perform the binomial test.
 #' 
-#' @export
+#' @noRd
 ObsExpBinomial <- function(data, n=10, parallel=FALSE) {
 
   if (!"BinomTable"%in%names(data)) {
@@ -343,7 +343,7 @@ ObsExpBinomial <- function(data, n=10, parallel=FALSE) {
 #' @param data The data should be a list with observe, expect and log2FC, export by ObsExpCompile or ObsExpRDS and contsins the BinomTable.
 #' @param p.adjust The p.adjust method, default is NULL.
 #' 
-#' @export
+#' @noRd
 ObsExpBinomCompile <- function(data, p.adjust=NULL) {
 
   if (!"Binom_Pval"%in%names(data)) {
@@ -385,7 +385,7 @@ ObsExpBinomCompile <- function(data, p.adjust=NULL) {
 #' @param number The column name of number of enriched regions.
 #' @param names If TRUE, will name the output list with type/condition.
 #'
-#' @export
+#' @noRd
 transformList <- function(list, data=data, type="type", number="number", names=TRUE){
 
   result <- NULL
@@ -417,7 +417,7 @@ transformList <- function(list, data=data, type="type", number="number", names=T
 #'
 #' @param data Input numbers
 #'
-#' @export
+#' @noRd
 NormDistribute <- function(data){
 
   if (!is.numeric(data)){
@@ -451,7 +451,7 @@ NormDistribute <- function(data){
 #' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
 #' @param parallel If TRUE, will apply bapply to run the process.
 #'
-#' @export
+#' @noRd
 compileStat <- function(
     observe=observe, expect=expect, stat.type="both", tail="both", plotINFO.save=FALSE, log.p=TRUE, parallel=FALSE){
 
@@ -577,7 +577,7 @@ compileStat <- function(
 #' @param plotINFO.save If assign as TRUE, will save the essential information to do some plot.
 #' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
 #'
-#' @export
+#' @noRd
 ObsExpCompare <- function(
     dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
@@ -644,7 +644,7 @@ ObsExpCompare <- function(
 #' @param plotINFO.save If assign as TRUE, will save the essential information to do some plot.
 #' @param log.p If TRUE, will log2 the p.value (Only could apply on p.norm).
 #'
-#' @export
+#' @noRd
 ObsExpCompareByBin <- function(
     dir=NULL, observe=NULL, expect.dir=NULL, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", observe.prefix="observe", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue",
@@ -662,7 +662,7 @@ ObsExpCompareByBin <- function(
 #' Compile the statistic result with intersect numbers from ObsExpCompare.
 #' @param data Result from ObsExpCompare.
 #' 
-#' @export
+#' @noRd
 ObsExpIntersectMerge <- function(data) {
   
   if (!all(names(data)%in%c("statistic", "expectNum"))) {

@@ -1,6 +1,20 @@
 # EnrichShuf
 
-## Dependency
+## How to install 
+
+R script
+
+```{R}
+branch <- ""
+token  <- "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"
+repo   <- "JosephLaiC/EnrichShuf"
+
+devtools::install_github(
+  repo=repo, ref=branch,
+  auth_token=token, upgrade=FALSE)
+```
+
+## Dependency (for version 0.1.0)
 
 ```
 ## regular package

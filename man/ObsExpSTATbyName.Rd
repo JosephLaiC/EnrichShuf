@@ -2,17 +2,20 @@
 % Please edit documentation in R/Stat.R
 \name{ObsExpSTATbyName}
 \alias{ObsExpSTATbyName}
-\title{Calculate the p-value of observed number of peaks in the expect distribution}
+\title{Calculate the p-value by comparing the observed value to an empirical model constructed from 
+expected values with specific range of distances (condition).}
 \usage{
 ObsExpSTATbyName(data, name = name, log.p = FALSE)
 }
 \arguments{
-\item{data}{The input data contained the information of expect distribution or observe number.}
+\item{data}{The input object contained the information of observed and expected number.}
 
-\item{name}{The name of condition to be calculated.}
+\item{name}{A character used to extract a specific object for calculating significance by comparing observed 
+values with empirical models built from expected values.}
 
-\item{log.p}{If TRUE, the log of p-value will be returned.}
+\item{log.p}{If set to TRUE, the logarithm of the p-value will be returned.}
 }
 \description{
-Calculate the p-value of observed number of peaks in the expect distribution
+Calculate the p-value by comparing the observed value to an empirical model constructed from 
+expected values with specific range of distances (condition).
 }

@@ -1,25 +1,10 @@
-# Recons_old <- function(
-#   data, to=c("intersect", "0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
-
-  
-
-# }
-
-
-# Recons_new <- function(){
-
-
-
-# }
-
-
 #' Re parse and perform statistic the shuffle peak sets
 #' @param data Input suject
 #' @param data.type If assign "old", input data type is old version
 #' @param from If assign "within", data type of input data
 #' @param to Condition of output data
 #' 
-#' @export
+#' @noRd
 ReconstructExpect <- function(
     data, from="within", data.type="old",
     to=c("intersect", "0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")) {
