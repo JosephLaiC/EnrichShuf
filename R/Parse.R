@@ -4,7 +4,7 @@
 #' @param from If assign "within", data type of input data
 #' @param to Condition of output data
 #' 
-#'  
+#' @noRd
 ReconstructExpect <- function(
     data, from="within", data.type="old",
     to=c("intersect", "0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")) {
