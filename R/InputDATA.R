@@ -440,6 +440,9 @@ CountCorrelationByBin <- function(
 #' \cr
 #' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
+#' @importFrom foreach %dopar% foreach
+#' @importFrom magrittr %>%
+#' 
 #' @export
 ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
@@ -558,33 +561,25 @@ ObsExpObj <- function(
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
 
-  } else if (parallel>1) {
+  } else if (parallel > 1) {
     
     gc(verbose = FALSE)
-
-    if (parallel.type=="mclapply") {
-
-      expect <- parallel::mclapply(1:random.n, function(x) {
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
-          genome = genome, incl = incl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition)
-      } ,mc.cores = parallel)
-
-    } else if (parallel.type=="bplapply") {
-
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-      expect <- BiocParallel::bplapply(1:random.n, function(x) {
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
-          genome = genome, incl = incl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition)
-      })
-      BiocParallel::register(BiocParallel::SerialParam())
-
+    doParallel::registerDoParallel(parallel)
+    if (random.n < parallel) {
+      split_n <- split(1:random.n, 1:random.n)
+    } else {
+      split_n <- split(1:random.n, cut(1:random.n, parallel))
     }
-    
-    
+
+    expect <- foreach(n = split_n, .packages = "magrittr") %dopar% {
+      lapply(n, function(x) {
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, 
+          tag = tag, outloc = outloc, genome = genome, incl = incl, seed = x) %>% 
+          CountCorrelation(intersect = intersect, condition = condition)
+      })
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
 
