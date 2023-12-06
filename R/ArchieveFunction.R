@@ -4,7 +4,7 @@
 #' @param name assign the fourth column name and keep it exsist in grange
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#'  
 bedfromfile <- function(data, name="name", strand=NULL){
 
   #library(GenomicFeatures)
@@ -61,7 +61,7 @@ bedfromfile <- function(data, name="name", strand=NULL){
 #' @param name assign the fourth column name and keep it exsist in grange
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#'  
 txdbfromBed <- function(data, name="name", strand=NULL){
   #library(dplyr)
 
@@ -100,7 +100,7 @@ txdbfromBed <- function(data, name="name", strand=NULL){
 #' @param strand.INFO if TRUE, means the name of txdb contained strand information ("/+" and "/-")
 #'
 #'
-#' @export
+#'  
 ExtractCorrelate <- function(
     data, txdb=txdb, tag=NULL, name="name", strand=NULL, verbose=TRUE, strand.INFO=FALSE){
 
@@ -186,7 +186,7 @@ ExtractCorrelate <- function(
 #' @param region.name ID of element A used for annotation
 #' @param verbose if TRUE, output the detail of processing
 #'
-#' @export
+#'  
 RegionAnnoFromData <- function(
     data, region=region, tag=FALSE, data.name="name", region.name="name", verbose=TRUE){
   #library(data.table); library(dplyr); library(ChIPseeker)
@@ -219,7 +219,7 @@ RegionAnnoFromData <- function(
 #' @param n Number of peaks to select.
 #' @param origin.n Number of peaks in grange.
 #' 
-#' @export
+#'  
 randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
 
   if (is.null(n)) {
@@ -245,7 +245,7 @@ randomPeak <- function(grange, seed=1, n=NULL, origin.n=NULL) {
 #' @param parallel If TRUE, will use parallel to calculate.
 #' @param peak.name The column name of peak name in query.
 #' 
-#' @export
+#'  
 PeakFactorStat <- function(
   subject.name, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
 
@@ -336,7 +336,7 @@ PeakFactorStat <- function(
 #' @param parallel If TRUE, will use parallel to calculate.
 #' @param peak.name The column name of peak name in query.
 #' 
-#' @export
+#'  
 PeaktoPeakIntersect <- function(
   subject, query=query, factor=factor, random.num=10000, pval=0.05, parallel=FALSE, peak.name="name") {
 
@@ -402,7 +402,7 @@ PeaktoPeakIntersect <- function(
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
 #'
 #'
-#' @export
+#'  
 compileCorrelation <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
@@ -447,7 +447,7 @@ compileCorrelation <- function(
 #' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
 #'
-#' @export
+#'  
 compileCorrelationByBin <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){
@@ -469,7 +469,7 @@ compileCorrelationByBin <- function(
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
 #'
 #'
-#' @export
+#'  
 compileCorrelation <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
@@ -514,7 +514,7 @@ compileCorrelation <- function(
 #' @param intersect If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row
 #' @param condition list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.
 #'
-#' @export
+#'  
 compileCorrelationByBin <- function(
     dir, parallel=FALSE, shuffle.n=10000, shuffle.prefix="shuffle_", file.ext=".txt.gz",
     intersect=TRUE, bin=1000, min=0, max=1000000, count.type="continue"){

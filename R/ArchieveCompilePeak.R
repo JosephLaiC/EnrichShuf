@@ -2,7 +2,7 @@
 #'
 #' @param grange input grange
 #'
-#' @export
+#'  
 ExtractStartEnd <- function(grange, strand=NULL){
 
   if (length(grange)>1){
@@ -45,7 +45,7 @@ ExtractStartEnd <- function(grange, strand=NULL){
 #' @param DistIn assign the distance threshold
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#'  
 DistCalculate <- function(
     query, subject=subject, name="name", DistIn=1000000, OVERLAY.ONLY=FALSE, strand=NULL, verbose=FALSE){
 
@@ -145,7 +145,7 @@ DistCalculate <- function(
 #' @param save if assign TRUE, the function will save the result
 #' @param strand if strand assign as TRUE means input data contain the strand information at column 6, if assign NULL strand will be *, otherwise could be "+" or "-"
 #'
-#' @export
+#'  
 CompilePeak <- function(
   query, subject=subject, name="name", DistIn=1000000, parallel=FALSE, save=NULL, strand=NULL){
 
@@ -239,7 +239,7 @@ CompilePeak <- function(
 #' \cr
 #' "bplapply" - Use BiocParallel to run in parallel
 #'
-#' @export
+#'  
 normalDistPeakCompile <- function(
     observe, expect.data=expect.data, 
     parallel=1, parallel.type="mclapply"){
