@@ -2,7 +2,8 @@
 % Please edit documentation in R/InputDATA.R
 \name{CountCorrelation}
 \alias{CountCorrelation}
-\title{Input the correlated (annotation) data}
+\title{Input the data processed by `RegionAnnoFromData`` and tally the occurrences for each condition 
+(e.g., intersections or specific distance ranges).}
 \usage{
 CountCorrelation(
   data,
@@ -11,13 +12,21 @@ CountCorrelation(
 )
 }
 \arguments{
-\item{data}{Input data.frame or compressed/uncompressed data. Data should output from RegionAnnoFromData, contain the information of
-name (1st column); $tag_region (2nd column); $tag_type (3rd column); $tag_dist (4th column)}
+\item{data}{Input data.frame or compressed/uncompressed file. 
+Data should be in the format outputted by RegionAnnoFromData . It contain the information of: \cr
+\cr
+column 1: Name of the interval for the input factor. \cr
+column 2: Name of the interval for the input element. \cr
+column 3: Relative position information of factors with respect to the nearest element. \cr
+column 4: Distance from the factors to the nearest element.}
 
-\item{intersect}{If assign TRUE, output result will contained the number intersect peaks ($tag_dist==0) at first row}
+\item{intersect}{If set to TRUE, the output result will place the number of intersecting peaks 
+(where column 4's "distance" is equal to 0) in the first row.}
 
-\item{condition}{list of two number saperate with "-", will be used to count the number of factor A within the distance of numbers.}
+\item{condition}{A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the 
+occurrences for each condition (e.g., intersections or specific distance ranges).}
 }
 \description{
-Input the correlated (annotation) data and count the number of each condition. (e.g. intersect or with specific distances)
+Input the data processed by `RegionAnnoFromData`` and tally the occurrences for each condition 
+(e.g., intersections or specific distance ranges).
 }

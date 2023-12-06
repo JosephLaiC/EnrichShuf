@@ -2,7 +2,8 @@
 % Please edit documentation in R/InputDATA.R
 \name{FactorElementCorrelate}
 \alias{FactorElementCorrelate}
-\title{Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.}
+\title{Input factors and associate them with elements. The output data.frame contains information 
+about factors and their nearest elements with the distance.}
 \usage{
 FactorElementCorrelate(
   factor,
@@ -13,16 +14,18 @@ FactorElementCorrelate(
 )
 }
 \arguments{
-\item{factor}{input the factor data.frame or the path to bed file.}
+\item{factor}{Input the factor data.frame or the path to the bed file.}
 
-\item{element}{input the element data.frame or the path to bed file.}
+\item{element}{Input the element data.frame or the path to bed file.}
 
-\item{strand}{if assign as TRUE means input ele,ent contain the strand information at column 6, and will consider the strand information in the analysis.}
+\item{strand}{If set to TRUE, it means that the input element contains strand information 
+in column 6, and the analysis will take the strand information into consideration.}
 
-\item{tag}{if assign as TRUE means output the tag information in the analysis.}
+\item{tag}{If a character is assigned, the tag information will be outputted in the final table column.}
 
-\item{outloc}{The location of output file.}
+\item{outloc}{The location of the output file.}
 }
 \description{
-Input factors and associate to elements. Output data.frame conatined the information of factors to nearest elements with the distance.
+Input factors and associate them with elements. The output data.frame contains information 
+about factors and their nearest elements with the distance.
 }

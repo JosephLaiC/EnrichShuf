@@ -2,12 +2,13 @@
 % Please edit documentation in R/InputDATA.R
 \name{BinsDefine}
 \alias{BinsDefine}
-\title{Get the intervals from min to max by bins.}
+\title{Given the input of bin size, minimum, and maximum values, generate intervals from the minimum to the maximum in specified bin increments. 
+This string could be used in counting the occurrences of factors with associated elements.}
 \usage{
 BinsDefine(bin = NULL, min = NULL, max = NULL, type = NULL)
 }
 \arguments{
-\item{bin}{Interval size of each window.}
+\item{bin}{Interval size of each window..}
 
 \item{min}{Minimum number of conditions}
 
@@ -15,10 +16,11 @@ BinsDefine(bin = NULL, min = NULL, max = NULL, type = NULL)
 
 \item{type}{Could be specify: \cr
 \cr
-"continue" - All conditions will continues from min+interval*(max/bin(n)-1) to min+interval(max/bin(n))\cr
+"continue" - Output a string of intervals with the range of distances between 0 and a series of consecutive numbers. \cr
 \cr
-"within"   - All conditions will start from 0 to each intervals {0+interval(max/bin(n))}}
+"eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.}
 }
 \description{
-Get the intervals from min to max by bins.
+Given the input of bin size, minimum, and maximum values, generate intervals from the minimum to the maximum in specified bin increments. 
+This string could be used in counting the occurrences of factors with associated elements.
 }

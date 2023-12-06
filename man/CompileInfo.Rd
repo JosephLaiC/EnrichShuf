@@ -2,25 +2,25 @@
 % Please edit documentation in R/CompilePeak.R
 \name{CompileInfo}
 \alias{CompileInfo}
-\title{Transform the data contained associated factors to each element with distance to a data list}
+\title{Transform the data, which includes associated factors for each element along with their distances, into a data list.}
 \usage{
 CompileInfo(data, dist = 1e+06, intersect = FALSE, include = "all")
 }
 \arguments{
-\item{data}{The data contained associated factors to each element with distance}
+\item{data}{The data included factors associated with each element, along with their distances.}
 
-\item{dist}{The distance to define the associated factors}
+\item{dist}{Distance to include associating factors to each element.}
 
-\item{intersect}{If  TRUE, results will be the number of elements that intersect with the factor}
+\item{intersect}{If set to TRUE, results will include the factor intersect with elements.}
 
 \item{include}{Could be specified one of the: \cr
 \cr
-"all" - Include all the elements that intersect with the factor. \cr
+"all" - Include all factors associated with elements. \cr
 \cr
-"upstream" - Include all the elements that at the upstream of the factor. \cr
+"upstream" - Include all factors associated with elements at upstream. \cr
 \cr
-"downstream" - Include all the elements that at the downstream of the factor.}
+"downstream" -  Include all factors associated with elements at downstream.}
 }
 \description{
-Transform the data contained associated factors to each element with distance to a data list
+Transform the data, which includes associated factors for each element along with their distances, into a data list.
 }

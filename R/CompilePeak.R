@@ -1,10 +1,17 @@
 
-#' Compile the associated factors to each element with distance information
+#' Associate the factors to each element with specified distance, and compile the information to an object.
 #' 
-#' @param element The element file with bed format
-#' @param factor The factor file with bed format
-#' @param dist The distance to the element for collection
-#' @param strand If TRUE, modified the dist with strand information
+#' @param element Input the element data.frame or the path to bed file.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param dist Distance information for associating factors to each element.
+#' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
+#' \cr
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 FactorElementCorObj <- function(
@@ -243,18 +250,25 @@ FactorElementCorObj <- function(
   
 }
 
-#' Compile the associated factors to each element with distance information by shuffle factors
+#' Shuffle factors across the genome, then associate them to each element with specified distance, 
+#' and compile the information to an object.
 #' 
-#' @param element The element file with bed format
-#' @param factor The factor file with bed format
-#' @param dist The distance to define the associated factors
-#' @param strand The strand information of element file
-#' @param parallel The number of cores to run the function
-#' @param parallel.type The type of parallel
-#' @param genome The genome information
-#' @param incl The included chromosomes
-#' @param excl The excluded chromosomes
-#' @param seed The seed number
+#' @param element Input the element data.frame or the path to bed file.
+#' @param factor Input the factor data.frame or the path to the bed file.
+#' @param dist Distance information for associating factors to each element.
+#' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
+#' and the analysis will take the strand information into consideration.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
+#' \cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
+#' \cr
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
+#' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
+#' Each name-size pair should be listed on a separate line and delimited by a tab.
+#' @param incl The interval information to include the input regions.
+#' @param excl The interval information to exclude the input regions.
+#' @param seed 	A number used to initialize the random character generator in R, ensuring consistent results.
 #' 
 #' @export
 ShufFactorElementCorObj <- function(
@@ -334,18 +348,18 @@ ShufFactorElementCorObj <- function(
 
 }
 
-#' Transform the data contained associated factors to each element with distance to a data list
+#' Transform the data, which includes associated factors for each element along with their distances, into a data list.
 #' 
-#' @param data The data contained associated factors to each element with distance
-#' @param dist The distance to define the associated factors
-#' @param intersect If  TRUE, results will be the number of elements that intersect with the factor
+#' @param data The data included factors associated with each element, along with their distances.
+#' @param dist Distance to include associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
 #' @param include Could be specified one of the: \cr
 #' \cr
-#' "all" - Include all the elements that intersect with the factor. \cr
+#' "all" - Include all factors associated with elements. \cr
 #' \cr
-#' "upstream" - Include all the elements that at the upstream of the factor. \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
 #' \cr
-#' "downstream" - Include all the elements that at the downstream of the factor.
+#' "downstream" -  Include all factors associated with elements at downstream.
 #' 
 #' @export
 CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
@@ -414,16 +428,16 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
 }
 
-#' Compare the observe compile information with expect compile information by binomial distribution
+#' Compare the observed compilation information with the expected compilation information using a binomial distribution.
 #' 
-#' @param observe The observe compile information
-#' @param expect.data The expect compile information
-#' @param parallel The number of cores to run the function
-#' @param parallel.type  Could be specify one of: \cr
+#' @param observe The observe compile information.
+#' @param expect.data The expect compile information. Typically will be a list.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#' @param parallel.type Could be specify one of: \cr
 #' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
+#' "mclapply" - Apply malapply to perform the run in parallel.\cr
 #' \cr
-#' "bplapply" - Use BiocParallel to run in parallel
+#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #'
 #' @export
 binomialPeakCompile <- function(
@@ -561,146 +575,5 @@ binomialPeakCompile <- function(
 
 }
 
-#' Compare the observe compile information with expect compile information by normal distribution
-#' 
-#' @param observe A numeric vector of observe data
-#' @param expect.data A list of numeric vector of expect data
-#' @param parallel The number of cores to use
-#' @param parallel.type  Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Use mclapply to run in parallel\cr
-#' \cr
-#' "bplapply" - Use BiocParallel to run in parallel
-#'
-#' @export
-normalDistPeakCompile <- function(
-    observe, expect.data=expect.data, 
-    parallel=1, parallel.type="mclapply"){
-  
-  if (!is.numeric(observe)) {
-    stop("Check the observe data")
-  }
-  
-  lapply(expect.data, function(x){
-    
-    if (!is.numeric(x)) {
-      stop("Check the expect data")
-    }
-    
-    if (!identical(names(x), names(observe))) {
-      stop("Check the names of expect and observe data")
-    }
-    
-  })
-  
-  if (parallel > 1) {
 
-    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-    idx <- data.frame(
-      start = idx.num,
-      end = c(idx.num[-1]-1, length(observe)))
-    
-    if (parallel.type=="mclapply") {
-      
-      gc(verbose = FALSE)
-      STAT.INFO <- parallel::mclapply(1:nrow(idx), function(x){
-        
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          
-          lapply(expect.data, function(z){z[[y]]}) %>% unlist() %>%
-            { list(mean=mean(.), sd=sd(.)) }
-          
-        })
-        
-      }, mc.cores = parallel) %>% Reduce(c, .)
-      
-    }
-    
-  } else {
-    
-    STAT.INFO <- lapply(1:length(observe), function(x){
-      
-      lapply(expect.data, function(y){y[[x]]}) %>% unlist() %>%
-        { list(mean=mean(.), sd=sd(.)) }
-      
-    })
-    
-  }
-  
-  
-  
-  if (parallel > 1) {
-    
-    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-    idx <- data.frame(
-      start = idx.num,
-      end = c(idx.num[-1]-1, length(observe)))
-    
-    if (parallel.type=="mclapply") {
-      
-      gc(verbose = FALSE)
-      result <- parallel::mclapply(1:nrow(idx), function(x){
-        
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          data.frame(
-            name    = names(observe)[y],
-            observe = observe[y],
-            expect  = STAT.INFO[[y]]$mean,
-            log2FC  = log2(observe[y]/STAT.INFO[[y]]$mean),
-            upper.p = pnorm(
-              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=FALSE),
-            lower.p = pnorm(
-              observe[y], mean=STAT.INFO[[y]]$mean, sd=STAT.INFO[[y]]$sd, lower.tail=TRUE))
-        }) %>% Reduce(rbind, .)
-        
-      }, mc.cores = parallel) %>% Reduce(rbind, .)
-      
-    } else if (parallel.type=="bplapply") {
-      
-      gc(verbose = FALSE)
-      result <- parallel::bplapply(1:nrow(idx), function(x){
-        
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          data.frame(
-            name    = names(observe)[y],
-            observe = observe[y],
-            expect  = expect.data[[y]]$mean,
-            log2FC  = log2(observe[y]/expect.data[[y]]$mean),
-            upper.p = pnorm(
-              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=FALSE),
-            lower.p = pnorm(
-              observe[y], mean=expect.data[[y]]$mean, sd=expect.data[[y]]$sd, lower.tail=TRUE))
-        }) %>% Reduce(rbind, .)
-        
-      }) %>% Reduce(rbind, .)
-      
-    } else {
-      
-      stop("Check the parallel.type")
-      
-    }
-    
-    
-  } else {
-    
-    result <- lapply(1:length(observe), function(x){
-      data.frame(
-        name    = names(observe)[x],
-        observe = observe[x],
-        expect  = expect.data[[x]]$mean,
-        log2FC  = log2(observe[x]/expect.data[[x]]$mean),
-        upper.p = pnorm(
-          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=FALSE),
-        lower.p = pnorm(
-          observe[x], mean=expect.data[[x]]$mean, sd=expect.data[[x]]$sd, lower.tail=TRUE))
-    }) %>% Reduce(rbind, .)
-    
-  }
-  
-  return(result)
-  
-}
 
