@@ -203,21 +203,21 @@ TargetFactorSTAT <- function(
   if (parallel==1) {
 
     expect.num <- expect.num <- sapply(1:random.num, function(x) 
-      { sum(total_dat[randomFactor_new(total_idx, seed=x, n=feature_len_num),"target"]) })
+      { sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) })
 
   } else if (parallel > 1) {
 
     if (parallel.type=="mclapply") {
 
       expect.num <- parallel::mclapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor_new(total_idx, seed=x, n=feature_len_num),"target"]) 
+        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
         }, mc.cores=parallel) %>% unlist()
 
     } else if (parallel.type=="bplapply") {
 
       BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
       expect.num <- BiocParallel::bplapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor_new(total_idx, seed=x, n=feature_len_num),"target"]) 
+        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
       }) %>% unlist()
       BiocParallel::register(BiocParallel::SerialParam())
 
@@ -229,24 +229,15 @@ TargetFactorSTAT <- function(
     stop("Please assign the number over 1 of cores to run the process")
   }
 
-  if (isTRUE(parallel)) {
-
-    gc(verbose=FALSE)
-    expect.num <- BiocParallel::bplapply(1:random.num, function(x) 
-      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
-
-  } else {
-
-    expect.num <- lapply(1:random.num, function(x) 
-      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
-
-  }
+  mean <- mean(expect.num)
+  sd   <- sd(expect.num)
 
   ## Calculate the statistic
   result <- data.frame(
     observe      = observe.num,
-    expect       = mean(expect.num),
-    log2FC       = log2(observe.num/mean(expect.num)),
+    expect       = mean,
+    log2FC       = log2(observe.num/mean),
+    z_score      = (observe.num-mean)/sd,
     upper_pval   = pnorm(
       observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
     lower_pval   = pnorm(
