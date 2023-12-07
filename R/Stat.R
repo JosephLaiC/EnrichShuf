@@ -24,6 +24,7 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
     condition = name,
     observe   = observe[name],
     expect    = mean,
+    z_score   = (observe[name]-mean)/sd,
     log2FC    = log2(observe[name]/mean),
     upper.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
     lower.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=TRUE,  log.p=log.p))
