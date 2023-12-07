@@ -96,9 +96,12 @@ FactorElementCorrelate <- function(
   
   if (length(multi.overlap) > 0) {
     
-    multi.info <- lapply(multi.overlap, function(x) 
-      intersect[which(intersect$factor_name==x),] %>% { .[1,] }) %>%
-      Reduce(rbind, .)
+    multi.info <- intersect %>%
+      filter(factor_name %in% multi.overlap) %>%
+      ## Sort by factor_name -> overlap_length -> element_name
+      arrange(factor_name, desc(overlap), element_name) %>%
+      group_by(factor_name) %>%
+      summarize(across(everything(), first), .groups = "drop")
     
     intersect.info <- rbind(
       intersect[!intersect$factor_name%in%multi.overlap,], multi.info) 
@@ -115,9 +118,12 @@ FactorElementCorrelate <- function(
   
   if (length(multi.associate) > 0) {
     
-    multi.info <- lapply(multi.associate, function(x) 
-      associate[which(associate$factor_name==x),] %>% { .[1,] }) %>%
-      Reduce(rbind, .)
+    multi.info <- associate %>%
+      filter(factor_name %in% multi.associate) %>%
+      ## Sort by factor_name -> overlap_length -> element_name
+      arrange(factor_name, desc(overlap), element_name) %>%
+      group_by(factor_name) %>%
+      summarize(across(everything(), first), .groups = "drop")
     
     associate.info <- rbind(
       associate[!associate$factor_name%in%multi.associate,], multi.info) 
