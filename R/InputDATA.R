@@ -571,7 +571,7 @@ ObsExpObj <- function(
       split_n <- split(1:random.n, cut(1:random.n, parallel))
     }
 
-    expect <- foreach(n = split_n, .packages = "magrittr") %dopar% {
+    expect <- foreach(n = split_n, .packages = "magrittr", .combine=c) %dopar% {
       lapply(n, function(x) {
         FactorShufCorrelate(
           factor = factor, element = element, strand = strand, 
