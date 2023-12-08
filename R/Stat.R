@@ -207,27 +207,26 @@ TargetFactorSTAT <- function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
 
-      expect.num <- parallel::mclapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-        }, mc.cores=parallel) %>% unlist()
-
-    } else if (parallel.type=="bplapply") {
-
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-      expect.num <- BiocParallel::bplapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-      }) %>% unlist()
-      BiocParallel::register(BiocParallel::SerialParam())
-
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    if (random.num < parallel) {
+      split_n <- split(1:random.num, 1:random.num)
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:random.num, cut(1:random.num, parallel))
     }
+    
+    expect <- foreach(n = split_n, .combine=c) %dopar% {
+      sapply(1:random.num, function(x) { 
+        sum(total_dat[randomFactor_new(total_idx, seed=x, n=feature_len_num),"target"]) 
+      })
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
   }
+
 
   mean <- mean(expect.num)
   sd   <- sd(expect.num)
