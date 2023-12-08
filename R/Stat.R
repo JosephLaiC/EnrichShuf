@@ -24,6 +24,7 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
     condition = name,
     observe   = observe[name],
     expect    = mean,
+    z_score   = (observe[name]-mean)/sd,
     log2FC    = log2(observe[name]/mean),
     upper.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
     lower.p   = pnorm(observe[name], mean=mean, sd=sd, lower.tail=TRUE,  log.p=log.p))
@@ -127,9 +128,9 @@ ObsExpSTAT <-  function(
 #' @export
 randomFactor <- function(list, seed=1, n=NULL) {
 
-  if (!is.character(list)) {
-    stop("Please assign a character vector to list")
-  }
+  # if (!is.character(list)) {
+  #   stop("Please assign a character vector to list")
+  # }
 
   if (is.null(n)) {
     stop("Please assign a number to n")
@@ -185,19 +186,27 @@ TargetFactorSTAT <- function(
   }
 
 
-  total.factor     <- total[total%in%factor]
-  total.factor.num <- length(total.factor)
+  total_dat <- data.frame(
+    total   = total,
+    feature = FALSE,
+    target  = FALSE)
 
+  total_dat[which(total_dat$total%in%factor),"feature"] <- TRUE
+  total_dat[which(total_dat$total%in%element),"target"] <- TRUE
+  
   ## Associate factor with element
-  observe.num <- sum(total.factor%in%element)
+  observe.num <- sum(total_dat[which(total_dat$feature),"target"])
+  feature_len_num <- sum(total_dat$feature)
+  total_idx       <- 1:nrow(total_dat)
 
   ## Randomly select elements from total
   if (parallel==1) {
 
-    expect.num <- lapply(1:random.num, function(x) 
-      sum(randomFactor(total, seed=x, n=total.factor.num)%in%element)) %>% unlist()
+    expect.num <- expect.num <- sapply(1:random.num, function(x) 
+      { sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) })
 
   } else if (parallel > 1) {
+
 
     gc(verbose = FALSE)
     doParallel::registerDoParallel(parallel)
@@ -219,11 +228,15 @@ TargetFactorSTAT <- function(
   }
 
 
+  mean <- mean(expect.num)
+  sd   <- sd(expect.num)
+
   ## Calculate the statistic
   result <- data.frame(
     observe      = observe.num,
-    expect       = mean(expect.num),
-    log2FC       = log2(observe.num/mean(expect.num)),
+    expect       = mean,
+    log2FC       = log2(observe.num/mean),
+    z_score      = (observe.num-mean)/sd,
     upper_pval   = pnorm(
       observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
     lower_pval   = pnorm(
