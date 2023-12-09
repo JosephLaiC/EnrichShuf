@@ -256,6 +256,19 @@ FactorShufCorrelate <- function(
     stop("Check the genome format")
   }
 
+  # Check incl and excl
+  if (is.character(incl)) {
+    incl <- valr::read_bed(incl, n_fields=3)
+  } else if (is.data.frame(incl)) {
+    incl <- incl[,1:3]
+  }
+  
+  if (is.character(excl)) {
+    excl <- valr::read_bed(excl, n_fields=3)
+  } else if (is.data.frame(excl)) {
+    excl <- excl[,1:3]
+  }
+
   if (all(!is.null(incl), !is.null(excl))) {
     
     stop("Check the incl and excl, only could specify one")
@@ -265,7 +278,7 @@ FactorShufCorrelate <- function(
     incl    <- data.frame(
       chrom = data.frame(genome)[,1],
       start = 0,
-      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(excl)
     shuffle <- valr::bed_shuffle(factor, genome, seed=seed, incl=incl)
 
   } else if (!is.null(incl)) {
@@ -545,6 +558,19 @@ ObsExpObj <- function(
   } else {
     stop("Check the genome format")
   }
+
+  # Check incl and excl
+  if (is.character(incl)) {
+    incl <- valr::read_bed(incl, n_fields=3)
+  } else if (is.data.frame(incl)) {
+    incl <- incl[,1:3]
+  }
+  
+  if (is.character(excl)) {
+    excl <- valr::read_bed(excl, n_fields=3)
+  } else if (is.data.frame(excl)) {
+    excl <- excl[,1:3]
+  }
   
   if (all(!is.null(incl), !is.null(excl))) {
     
@@ -555,7 +581,7 @@ ObsExpObj <- function(
     incl    <- data.frame(
       chrom = data.frame(genome)[,1],
       start = 0,
-      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(valr::read_bed(excl, n_fields=3))
+      end   = data.frame(genome)[,2]) %>% valr::bed_subtract(excl)
 
   }
 
