@@ -3,13 +3,13 @@
 #' 
 #' @param data A data frame with the following columns:
 #' \itemize{
-#'   \item{condition}{The condition names.}
-#'   \item{observe}{The observed number in each condition.}
-#'   \item{expect}{The expected number in each condition.}
-#'   \item{z_score}{The z-score of the observed number.}
-#'   \item{log2FC}{The log2 fold change of the observed number.}
-#'   \item{upper.p}{The upper p-value of the observed number.}
-#'   \item{lower.p}{The lower p-value of the observed number.}
+#'   \item{condition: }{The condition names.}
+#'   \item{observe: }{The observed number in each condition.}
+#'   \item{expect: }{The expected number in each condition.}
+#'   \item{z_score: }{The z-score of the observed number.}
+#'   \item{log2FC: }{The log2 fold change of the observed number.}
+#'   \item{upper.p: }{The upper p-value of the observed number.}
+#'   \item{lower.p: }{The lower p-value of the observed number.}
 #' }
 #' @param width The width of the bar.
 #' @param observe.col The color of the observed bar.
