@@ -1,4 +1,117 @@
 
+
+
+FeatRegionChr <- function(
+  feature, region=region, genome=genome, parallel=1
+) {
+  if (!is.data.frame(feature)) {
+    stop("Check the feature format")
+  }
+
+  if (!is.data.frame(region)) {
+    stop("Check the region format")
+  }
+
+  if (!is.data.frame(genome)) {
+    stop("Check the genome format")
+  }
+
+  feature <- feature[,1:4]
+  colnames(feature) <- c("chrom", "start", "end", "name")
+  
+  ## feature processing
+  feature <- data.table::as.data.table(feature)
+  data.table::setkey(feature, start, end)
+
+
+  ## region processing
+  region <- region[,1:4] 
+  slop_dat <- valr::bed_slop(
+    region[,1:4], 
+    genome = genome, 
+    both   = 1000000,
+    trim   = TRUE)
+  colnames(slop_dat) <- c("chrom", "slop_start", "slop_end", "name")
+
+  region <- region %>% 
+    left_join(slop_dat, by=c("chrom", "name"))
+
+  region_num <- nrow(region)
+  
+  if (parallel==1){
+
+    result <- lapply(1:region_num, function(x){
+
+      tmp_region <- region[x,]
+
+      chr     <- pull(tmp_region, chrom)
+      min_num <- pull(tmp_region, slop_start)
+      max_num <- pull(tmp_region, slop_end)
+
+      tmp_dat <- feature[chrom %in% chr & end >= min_num & start <= max_num] %>%
+        valr::bed_closest(., tmp_region)
+  
+      tmp_res <- -pull(tmp_dat, .dist)
+      names(tmp_res) <- pull(tmp_dat, name.x)
+      tmp_res
+  
+    })
+
+  } else if (parallel > 1) {
+
+    ## if parallel
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    if (region_num < parallel) {
+      split_n <- split(1:region_num, 1:region_num)
+    } else {
+      split_n <- split(1:region_num, cut(1:region_num, parallel))
+    }
+
+    result <- foreach(n = split_n, .packages = "magrittr", .combine=c) {
+
+      lapply(n, function(x){
+
+        tmp_region <- region[x,]
+        
+        chr     <- pull(tmp_region, chrom)
+        min_num <- pull(tmp_region, slop_start)
+        max_num <- pull(tmp_region, slop_end)
+
+        tmp_dat <- feature[chrom == chr & end >= min_num & start <= max_num] %>%
+          valr::bed_closest(., tmp_region)
+  
+        tmp_res <- -pull(tmp_dat, .dist)
+        names(tmp_res) <- pull(tmp_dat, name.x)
+        tmp_res
+  
+      })
+
+    }
+
+  }
+
+  names(result) <- pull(region, name)
+  return(result)
+
+  
+}
+
+
+FeatRegionObj <- function(
+  feature, region=region, genome=genome, parallel=1
+) {
+
+
+
+}
+
+
+
+
+
+
+
 #' Associate the factors to each element with specified distance, and compile the information to an object.
 #' 
 #' @param element Input the element data.frame or the path to bed file.
