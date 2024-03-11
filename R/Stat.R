@@ -91,7 +91,7 @@ ObsExpSTAT <-  function(
     # // regist parallel
     gc(verbose = FALSE)
     doParallel::registerDoParallel(parallel)
-    # // get index for parallel
+    # // get index for parallel (list)
     if (length(name_chr) < parallel) {
       split_n <- split(1:length(name_chr), 1:length(name_chr))
     } else {
@@ -99,9 +99,9 @@ ObsExpSTAT <-  function(
     }
 
     # // apply parallel
-    result <- foreach(n = split_n, .combine=c) %dopar% {
+    result <- foreach(n = split_n, .combine=rbind) %dopar% {
       lapply(n, function(x){
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
+        ObsExpSTATbyName(data, name=name_chr[x], log.p=log.p)
       }) %>% Reduce(rbind, .)
     }
     doParallel::stopImplicitCluster()
