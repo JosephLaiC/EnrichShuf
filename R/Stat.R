@@ -78,8 +78,6 @@ ObsExpSTAT <-  function(
   ## Get charaters of names
   name_chr <- names(observe)
 
-
-
   if (parallel==1) {
 
     result <- lapply(name_chr, function(x){
@@ -90,25 +88,23 @@ ObsExpSTAT <-  function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
-
-      result <- parallel::mclapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }, mc.cores=parallel) %>% Reduce(rbind, .)
-
-    } else if (parallel.type=="bplapply") {
-
-      result <- BiocParallel::bplapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }) %>% Reduce(rbind, .)
-
+    # // regist parallel
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    # // get index for parallel
+    if (length(name_chr) < parallel) {
+      split_n <- split(1:length(name_chr), 1:length(name_chr))
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:length(name_chr), cut(1:length(name_chr), parallel))
     }
+
+    # // apply parallel
+    result <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(n, function(x){
+        ObsExpSTATbyName(data, name=x, log.p=log.p)
+      }) %>% Reduce(rbind, .)
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
