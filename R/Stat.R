@@ -212,7 +212,7 @@ TargetFactorSTAT <- function(
       split_n <- split(1:random.num, cut(1:random.num, parallel))
     }
     
-    expect <- foreach(n = split_n, .combine=c) %dopar% {
+    expect.num <- foreach(n = split_n, .combine=c) %dopar% {
       sapply(1:random.num, function(x) { 
         sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
       })
