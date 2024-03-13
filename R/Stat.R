@@ -214,7 +214,7 @@ TargetFactorSTAT <- function(
     
     expect <- foreach(n = split_n, .combine=c) %dopar% {
       sapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor_new(total_idx, seed=x, n=feature_len_num),"target"]) 
+        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
       })
     }
     doParallel::stopImplicitCluster()
