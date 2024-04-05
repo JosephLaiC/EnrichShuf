@@ -27,10 +27,6 @@ FactorElementCorObj <- function(
   if (!parallel > 1) {
     stop("Check the parallel input is larger than 1")
   }
-  if (!is.integer(parallel)) {
-    stop("Check the parallel input is an integer")
-  }
-
 
   if (!is.numeric(dist)) {
     stop("Check the dist input is numeric")
