@@ -219,9 +219,7 @@ FactorElementCorObj <- function(
 
     }
 
-  } else {
-    stop("Check the parallel input")
-  }
+  } 
 
   names(result) <- data.frame(element)[,4]
   return(result)
