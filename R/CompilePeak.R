@@ -381,21 +381,15 @@ CountNumber <- function(
 
       if (include=="all") {
 
-        result <- lapply(numbers, function(x){
-          sum(abs(x) < dist)
-        })
+        result <- sum(abs(numbers) < dist)
 
       } else if (include=="upstream") {
 
-        result <- lapply(numbers, function(x){
-          sum(x <= 0 & abs(x) < dist)
-        })
+        result <- sum(numbers <= 0 & abs(numbers) < dist)
 
       } else if (include=="downstream") {
 
-        result <- lapply(numbers, function(x){
-          sum(x >= 0 & abs(x) < dist)
-        })
+        result <- sum(numbers >= 0 & abs(numbers) < dist)
 
       } else {
         stop("Check the include parameter")
@@ -405,21 +399,15 @@ CountNumber <- function(
 
       if (include=="all") {
 
-        result <- lapply(numbers, function(x){
-          sum(abs(x) <= dist & abs(x) > 0)
-        })
+        result <- sum(abs(numbers) <= dist & abs(numbers) > 0)
 
       } else if (include=="upstream") {
 
-        result <- lapply(numbers, function(x){
-          sum(x < 0 & abs(x) <= dist)
-        })
+        result <- sum(numbers < 0 & abs(numbers) <= dist)
 
       } else if (include=="downstream") {
 
-        result <- lapply(numbers, function(x){
-          sum(x > 0 & abs(x) <= dist)
-        })
+        result <- sum(numbers > 0 & abs(numbers) <= dist)
 
       } else {
         stop("Check the include parameter")
@@ -453,7 +441,6 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
     CountNumber(x, dist=dist, intersect=intersect, include=include)
   }) %>% unlist()
 
-  names(result) <- names(data)
   return(result)
 
 }
