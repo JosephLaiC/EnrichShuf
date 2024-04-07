@@ -348,6 +348,89 @@ ShufFactorElementCorObj <- function(
 
 }
 
+#' Count the number of elements associated with factors within the specified distance.
+#'
+#' @param numbers The data included factors associated with each element, along with their distances.
+#' @param dist Distance to include associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all factors associated with elements. \cr
+#' \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
+#' \cr
+#' "downstream" -  Include all factors associated with elements at downstream.
+#'
+#' @export
+CountNumber <- function(
+  numbers, dist=1000000, intersect=FALSE, include="all") {
+
+  if (is.null(numbers)) {
+    return(0)
+  }
+
+  if (dist==0) {
+
+    result <- lapply(numbers, function(x){
+      sum(abs(x) == dist)
+    })
+
+  } else {
+    
+    if (isTRUE(intersect)) {
+
+      if (include=="all") {
+
+        result <- lapply(numbers, function(x){
+          sum(abs(x) < dist)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(numbers, function(x){
+          sum(x <= 0 & abs(x) < dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(numbers, function(x){
+          sum(x >= 0 & abs(x) < dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    } else {
+
+      if (include=="all") {
+
+        result <- lapply(numbers, function(x){
+          sum(abs(x) <= dist & abs(x) > 0)
+        })
+
+      } else if (include=="upstream") {
+
+        result <- lapply(numbers, function(x){
+          sum(x < 0 & abs(x) <= dist)
+        })
+
+      } else if (include=="downstream") {
+
+        result <- lapply(numbers, function(x){
+          sum(x > 0 & abs(x) <= dist)
+        })
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    }
+
+  }
+
+}
+
 #' Transform the data, which includes associated factors for each element along with their distances, into a data list.
 #' 
 #' @param data The data included factors associated with each element, along with their distances.
@@ -364,65 +447,9 @@ ShufFactorElementCorObj <- function(
 #' @export
 CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
-  if (dist==0) {
-
-    result <- lapply(data, function(x){
-      sum(abs(x) == dist)
-    })
-
-  } else {
-    
-    if (isTRUE(intersect)) {
-
-      if (include=="all") {
-
-        result <- lapply(data, function(x){
-          sum(abs(x) < dist)
-        })
-
-      } else if (include=="upstream") {
-
-        result <- lapply(data, function(x){
-          sum(x <= 0 & abs(x) < dist)
-        })
-
-      } else if (include=="downstream") {
-
-        result <- lapply(data, function(x){
-          sum(x >= 0 & abs(x) < dist)
-        })
-
-      } else {
-        stop("Check the include parameter")
-      }
-
-    } else {
-
-      if (include=="all") {
-
-        result <- lapply(data, function(x){
-          sum(abs(x) <= dist & abs(x) > 0)
-        })
-
-      } else if (include=="upstream") {
-
-        result <- lapply(data, function(x){
-          sum(x < 0 & abs(x) <= dist)
-        })
-
-      } else if (include=="downstream") {
-
-        result <- lapply(data, function(x){
-          sum(x > 0 & abs(x) <= dist)
-        })
-
-      } else {
-        stop("Check the include parameter")
-      }
-
-    }
-
-  }
+  result <- lapply(data, function(x){
+    CountNumber(x, dist=dist, intersect=intersect, include=include)
+  })
 
   return(unlist(result))
 
