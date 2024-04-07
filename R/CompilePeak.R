@@ -451,9 +451,10 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
   result <- lapply(data, function(x){
     CountNumber(x, dist=dist, intersect=intersect, include=include)
-  })
+  }) %>% unlist()
 
-  return(unlist(result))
+  names(result) <- names(data)
+  return(result)
 
 }
 
