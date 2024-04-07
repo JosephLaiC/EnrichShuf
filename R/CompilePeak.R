@@ -429,6 +429,8 @@ CountNumber <- function(
 
   }
 
+  return(result)
+
 }
 
 #' Transform the data, which includes associated factors for each element along with their distances, into a data list.
