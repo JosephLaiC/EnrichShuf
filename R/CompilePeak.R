@@ -701,8 +701,8 @@ binomialPeakCompile <- function(
   result$pval <- ifelse(result$log2FC > 0, result$upper.p, result$lower.p)
 
   if (isTRUE(p.adjust)) {
-    result$upper.FDR <- p.adjust(result$upper.p, method=p.adjust)
-    result$lower.FDR <- p.adjust(result$lower.p, method=p.adjust)
+    result$upper.FDR <- p.adjust(result$upper.p, method="fdr")
+    result$lower.FDR <- p.adjust(result$lower.p, method="fdr")
     result$FDR <- ifelse(result$log2FC > 0, result$upper.FDR, result$lower.FDR)
   }
 
