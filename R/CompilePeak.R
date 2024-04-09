@@ -545,7 +545,7 @@ shuffleCompile <- function(
 #'
 #' @export
 binomialPeakCompile <- function(
-  observe, expect.data=expect.data, 
+  observe, expect.data=expect.data, p.adjust=TRUE,
   parallel=1, parallel.type="mclapply") {
 
    if (!is.numeric(observe)) {
@@ -665,7 +665,7 @@ binomialPeakCompile <- function(
           name    = names(observe)[x],
           observe = observe[x],
           expect  = shuffle.mean[x],
-          log2FC  = log2(observe[x]/shuffle.mean[x]),
+          log2FC  = log2(observe[x] + 1) - log2(shuffle.mean[x] + 1),
           upper.p = binom.test(
             increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
           lower.p = binom.test(
@@ -673,6 +673,14 @@ binomialPeakCompile <- function(
   
     }) %>% Reduce(rbind, .)
 
+  }
+
+  result$pval <- ifelse(result$log2FC > 0, result$upper.p, result$lower.p)
+
+  if (isTRUE(p.adjust)) {
+    result$upper.FDR <- p.adjust(result$upper.p, method=p.adjust)
+    result$lower.FDR <- p.adjust(result$lower.p, method=p.adjust)
+    result$FDR <- ifelse(result$log2FC > 0, result$upper.FDR, result$lower.FDR)
   }
 
   return(result)
