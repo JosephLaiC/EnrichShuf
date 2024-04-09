@@ -548,10 +548,22 @@ binomialPeakCompile <- function(
   observe, expect.data=expect.data, p.adjust=TRUE,
   parallel=1, parallel.type="mclapply") {
 
-   if (!is.numeric(observe)) {
+  # / Check the input
+  if (!is.numeric(observe)) {
     stop("Check the observe data")
   }
+
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
+  }
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
+  }
   
+  # / Check the observe and expect data
   lapply(expect.data, function(x){
     
     if (!is.numeric(x)) {
@@ -564,98 +576,72 @@ binomialPeakCompile <- function(
     
   })
 
+  # / get logic list
   increase.logic <- lapply(expect.data, function(x){observe > x})
   decrease.logic <- lapply(expect.data, function(x){observe < x})
 
-  if (parallel > 1) {
-
-    if (parallel.type=="mclapply") {
-
-      idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-      idx <- data.frame(
-        start = idx.num,
-        end = c(idx.num[-1]-1, length(observe)))
-
-      gc(verbose = FALSE)
-      increase.number <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(increase.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
-        })
-      }, mc.cores = parallel) %>% unlist()
-
-      gc(verbose = FALSE)
-      decrease.number <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(decrease.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
-        })
-      }, mc.cores = parallel) %>% unlist()
-
-    }
+  # / get the number of increase and decrease from the logic list
+  if (parallel == 1) {
+      
+    increase.number <- lapply(1:length(observe), function(x){
+          
+      lapply(increase.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+    
+    }) %>% unlist()
+  
+    decrease.number <- lapply(1:length(observe), function(x){
+          
+      lapply(decrease.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+    
+    }) %>% unlist()
 
   } else {
 
-    increase.number <- lapply(1:length(observe), function(x){
-        
-        lapply(increase.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
-  
-    }) %>% unlist()
+    if (length(observe) < parallel) {
+      split_n <- split(1:length(observe), 1:length(observe))
+    } else {
+      split_n <- split(1:length(observe), cut(1:length(observe), parallel))
+    }
 
-    decrease.number <- lapply(1:length(observe), function(x){
-        
-        lapply(decrease.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
-  
-    }) %>% unlist()
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+
+    increase.number <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+        lapply(
+          increase.logic, 
+          function(y){
+            y[[x]]
+          }
+        ) %>% unlist() %>% sum()
+        }
+      )
+    }
+
+    decrease.number <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+        lapply(
+          decrease.logic, 
+          function(y){
+            y[[x]]
+          }
+        ) %>% unlist() %>% sum()
+        }
+      )
+    }
 
   }
 
-  if (parallel > 1) {
-
-    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-    idx <- data.frame(
-      start = idx.num,
-      end = c(idx.num[-1]-1, length(observe)))
-    
-    if (parallel.type=="mclapply") {
-
-      gc(verbose = FALSE)
-      shuffle.mean <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(expect.data, function(z){z[y]}) %>% unlist() %>% mean()
-        }) %>% unlist()
-
-      }, mc.cores = parallel) %>% unlist()
-
-      gc(verbose = FALSE)
-      result <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          data.frame(
-            name    = names(observe)[y],
-            observe = observe[y],
-            expect  = shuffle.mean[y],
-            log2FC  = log2(observe[y]/shuffle.mean[y]),
-            upper.p = binom.test(
-              increase.number[y], length(expect.data), 0.5, alternative="greater")$p.value,
-            lower.p = binom.test(
-              decrease.number[y], length(expect.data), 0.5, alternative="greater")$p.value)
-        }) %>% Reduce(rbind, .)
-
-      }, mc.cores = parallel) %>% Reduce(rbind, .)
-
-    }
-
-  } else {
+  # / calculate the shuffle mean for getting the log2FC and calculate the p-value by binomial test
+  if (parallel == 1) {
 
     shuffle.mean <- lapply(1:length(observe), function(x){
         
-        lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
+      lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
   
     }) %>% unlist()
 
@@ -665,13 +651,41 @@ binomialPeakCompile <- function(
           name    = names(observe)[x],
           observe = observe[x],
           expect  = shuffle.mean[x],
-          log2FC  = log2(observe[x] + 1) - log2(shuffle.mean[x] + 1),
+          log2FC  = log2(observe[x]+1) - log2(shuffle.mean[x]+1),
           upper.p = binom.test(
             increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
           lower.p = binom.test(
             decrease.number[x], length(expect.data), 0.5, alternative="greater")$p.value)
   
     }) %>% Reduce(rbind, .)
+
+  } else {
+
+    if (length(observe) < parallel) {
+      split_n <- split(1:length(observe), 1:length(observe))
+    } else {
+      split_n <- split(1:length(observe), cut(1:length(observe), parallel))
+    }
+
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+
+    result <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+          data.frame(
+            name    = names(observe)[x],
+            observe = observe[x],
+            expect  = shuffle.mean[x],
+            log2FC  = log2(observe[x]+1) - log2(shuffle.mean[x]+1),
+            upper.p = binom.test(
+              increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
+            lower.p = binom.test(
+              decrease.number[x], length(expect.data), 0.5, alternative="greater")$p.value)
+        }
+      )
+    }
 
   }
 
