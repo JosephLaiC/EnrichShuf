@@ -78,8 +78,6 @@ ObsExpSTAT <-  function(
   ## Get charaters of names
   name_chr <- names(observe)
 
-
-
   if (parallel==1) {
 
     result <- lapply(name_chr, function(x){
@@ -90,25 +88,23 @@ ObsExpSTAT <-  function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
-
-      result <- parallel::mclapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }, mc.cores=parallel) %>% Reduce(rbind, .)
-
-    } else if (parallel.type=="bplapply") {
-
-      result <- BiocParallel::bplapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }) %>% Reduce(rbind, .)
-
+    # // regist parallel
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    # // get index for parallel (list)
+    if (length(name_chr) < parallel) {
+      split_n <- split(1:length(name_chr), 1:length(name_chr))
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:length(name_chr), cut(1:length(name_chr), parallel))
     }
+
+    # // apply parallel
+    result <- foreach(n = split_n, .combine=rbind) %dopar% {
+      lapply(n, function(x){
+        ObsExpSTATbyName(data, name=name_chr[x], log.p=log.p)
+      }) %>% Reduce(rbind, .)
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
@@ -207,27 +203,26 @@ TargetFactorSTAT <- function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
 
-      expect.num <- parallel::mclapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-        }, mc.cores=parallel) %>% unlist()
-
-    } else if (parallel.type=="bplapply") {
-
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-      expect.num <- BiocParallel::bplapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-      }) %>% unlist()
-      BiocParallel::register(BiocParallel::SerialParam())
-
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    if (random.num < parallel) {
+      split_n <- split(1:random.num, 1:random.num)
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:random.num, cut(1:random.num, parallel))
     }
+    
+    expect.num <- foreach(n = split_n, .combine=c) %dopar% {
+      sapply(n, function(x) { 
+        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
+      })
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
   }
+
 
   mean <- mean(expect.num)
   sd   <- sd(expect.num)

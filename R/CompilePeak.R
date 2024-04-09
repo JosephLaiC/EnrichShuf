@@ -21,9 +21,11 @@ FactorElementCorObj <- function(
   if (any(!is.numeric(parallel))) {
     stop("Check the parallel input is numeric")
   }
-
-  if (!parallel > 0) {
-    stop("Check the parallel input is larger than 0")
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
   }
 
   if (!is.numeric(dist)) {
@@ -100,151 +102,121 @@ FactorElementCorObj <- function(
     
   }
 
-  gc(verbose=FALSE)
-  if (isTRUE(strand)) {
-      
-    plus.element  <- element[element$strand=="+",]
-    minus.element <- element[element$strand=="-",]
-      
-    if (parallel > 1) {
+  if (parallel == 1) {
+
+    if (isTRUE(strand)) {
         
-      ## Create the index for parallel
-      plus.idx.num <- seq(1, nrow(plus.element), ceiling(nrow(plus.element)/parallel))
-      plus.idx <- data.frame(
-        start = plus.idx.num,
-        end = c(plus.idx.num[-1]-1, nrow(plus.element)))
-
-      minus.idx.num <- seq(1, nrow(minus.element), ceiling(nrow(minus.element)/parallel))
-      minus.idx <- data.frame(
-        start = minus.idx.num,
-        end = c(minus.idx.num[-1]-1, nrow(minus.element)))
-
-      if (parallel.type=="mclapply") {
-          
-        plus.result <- parallel::mclapply(1:nrow(plus.idx), function(x) {
-          start <- plus.idx[x,1]; end <- plus.idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, plus.element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
-          
-
-        minus.result <- parallel::mclapply(1:nrow(minus.idx), function(x) {
-          start <- minus.idx[x,1]; end <- minus.idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, minus.element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist * -1
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
+        ## // make the element to plus and minus strand
+        plus.element  <- element[element$strand=="+",]
+        minus.element <- element[element$strand=="-",]
         
-      } else if (parallel.type=="bplapply") {
-          
-        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-        plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
+        plus.result <- lapply(1:nrow(plus.element), function(x) {
           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
             filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
           number <- table$.dist
-          names(number) <- table$factor_name
+          names(number) <- table$factor_name.x
           number
         })
-          
-        minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
+        
+        minus.result <- lapply(1:nrow(minus.element), function(x) {
           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
             filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-          number <- table$.dist
-          names(number) <- table$factor_name
+          number <- table$.dist * -1
+          names(number) <- table$factor_name.x
           number
         })
-        BiocParallel::register(BiocParallel::SerialParam())
-          
-      } 
         
-    } else if (parallel==1) {
+        result <- c(plus.result, minus.result)
         
-      plus.result <- lapply(1:nrow(plus.element), function(x) {
-        table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist
-        names(number) <- table$factor_name
-        number
-      })
+      } else if (!isTRUE(strand)) {
         
-      minus.result <- lapply(1:nrow(minus.element), function(x) {
-        table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist * -1
-        names(number) <- table$factor_name
-        number
-      })
-        
-    }
-      
-    result <- c(plus.result, minus.result)
-    
-  } else if (!isTRUE(strand)) {
-    
-    if (parallel > 1) {
-      
-      idx.num <- seq(1, nrow(element), ceiling(nrow(element)/parallel))
-      idx <- data.frame(
-        start = idx.num,
-        end = c(idx.num[-1]-1, nrow(element)))
-
-      if (parallel.type=="mclapply") {
-        
-        result <- parallel::mclapply(1:nrow(idx), function(x) {
-          start <- idx[x,1]; end <- idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
-        
-        
-      } else if (parallel.type=="bplapply") {
-        
-        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-        result <- BiocParallel::bplapply(1:nrow(element), function(x) {
+        result <- lapply(1:nrow(element), function(x) {
           table <- valr::bed_closest(factor, element[x,]) %>% 
-            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
-          number <- table[,1]
-          names(number) <- table[,2]
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
           number
         })
-        BiocParallel::register(BiocParallel::SerialParam())
-        
+    }
+
+  } else {
+
+    if (isTRUE(strand)) {
+
+      ## // make the element to plus and minus strand
+      plus.element  <- element[element$strand=="+",]
+      minus.element <- element[element$strand=="-",]
+
+      ## Create the index for parallel
+      if (nrow(plus.element) < parallel) {
+        split_n <- split(1:nrow(plus.element), 1:nrow(plus.element))
+      } else {
+        split_n <- split(1:nrow(plus.element), cut(1:nrow(plus.element), parallel))
       }
 
-      
+      if (nrow(minus.element) < parallel) {
+        split_n_minus <- split(1:nrow(minus.element), 1:nrow(minus.element))
+      } else {
+        split_n_minus <- split(1:nrow(minus.element), cut(1:nrow(minus.element), parallel))
+      }
+
+      # Run the parallel
+      gc(verbose = FALSE)
+      doParallel::registerDoParallel(parallel)
+
+      plus.result <- foreach(n = split_n, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
+      gc(verbose = FALSE)
+      minus.result <- foreach(n = split_n_minus, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist * -1
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
+      result <- c(plus.result, minus.result)
+
     } else {
-      
-      result <- lapply(1:nrow(element), function(x) {
-        table <- valr::bed_closest(factor, element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist
-        names(number) <- table$factor_name.x
-        number
-      })
-      
+
+      ## Create the index for parallel
+      if (nrow(element) < parallel) {
+        split_n <- split(1:nrow(element), 1:nrow(element))
+      } else {
+        split_n <- split(1:nrow(element), cut(1:nrow(element), parallel))
+      }
+
+      # Run the parallel
+      gc(verbose = FALSE)
+      doParallel::registerDoParallel(parallel)
+
+      result <- foreach(n = split_n, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
     }
-  }
-  
+
+  } 
+
   names(result) <- data.frame(element)[,4]
   return(result)
   
