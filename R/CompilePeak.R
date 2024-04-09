@@ -471,11 +471,8 @@ shuffleCompile <- function(
   if (!is.character(dir)) {
     stop("Check the dir input")
   }
-  if (!file.exists(dir)) {
+  if (!dir.exists(dir)) {
     stop("Check the dir exsist")
-  }
-  if (!is.dir(dir)) {
-    stop("Check the dir is a directory")
   }
 
   if (!is.character(shuffle_name)) {
