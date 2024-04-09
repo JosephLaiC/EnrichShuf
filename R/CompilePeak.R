@@ -535,7 +535,7 @@ shuffleCompile <- function(
     if (shuffle_times < parallel) {
       split_n <- split(1:shuffle_times, 1:shuffle_times)
     } else {
-      split_n <- split(1:, cut(1:shuffle_times, parallel))
+      split_n <- split(1:shuffle_times, cut(1:shuffle_times, parallel))
     }
 
     gc(verbose = FALSE)
