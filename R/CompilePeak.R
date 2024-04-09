@@ -445,6 +445,124 @@ CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
 }
 
+#' Compile the shuffle objects.
+#'
+#' @param dir The directory path to the shuffle files.
+#' @param shuffle_name The prefix of the shuffle files.
+#' @param ext_file The extension of the shuffle files.
+#' @param dist Distance information for associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all factors associated with elements. \cr
+#' \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
+#' \cr
+#' "downstream" -  Include all factors associated with elements at downstream.
+#' @param shuffle_times The number of shuffle files.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#'
+#' @export
+shuffleCompile <- function(
+  dir, shuffle_name = "shuffle_", ext_file = ".rds", 
+  dist = NULL, intersect = FALSE, include = "all", 
+  shuffle_times = 100, parallel = 1) {
+
+  if (!is.character(dir)) {
+    stop("Check the dir input")
+  }
+  if (!file.exists(dir)) {
+    stop("Check the dir exsist")
+  }
+  if (!is.dir(dir)) {
+    stop("Check the dir is a directory")
+  }
+
+  if (!is.character(shuffle_name)) {
+    stop("Check the shuffle_name input")
+  }
+
+  if (!is.character(ext_file)) {
+    stop("Check the ext_file input")
+  }
+
+  if (!is.numeric(sig_dist)) {
+    stop("Check the sig_dist input")
+  }
+
+  if (!is.numeric(shuffle_times)) {
+    stop("Check the shuffle_times input")
+  }
+
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
+  }
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
+  }
+
+  # Check the shuffle files
+  lapply(
+    1:shuffle_times, 
+    function(x) {
+      file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+      if (!file.exists(file)) {
+        stop("Check the shuffle files:", file, "exsist in path")
+      }
+    }
+  )
+
+  gc(verbose=FALSE)
+  if (parallel == 1) {
+
+    result <- lapply(
+      1:shuffle_nums, 
+      function(x) {
+        readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+          CompileInfo(
+            dist      = dist,
+            intersect = FALSE, 
+            include   = "all"
+          )
+      }
+    )
+
+  } else {
+
+    if (shuffle_times < parallel) {
+      split_n <- split(1:shuffle_times, 1:shuffle_times)
+    } else {
+      split_n <- split(1:, cut(1:shuffle_times, parallel))
+    }
+
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    result <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x) {
+          readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+            CompileInfo(
+              dist      = dist,
+              intersect = FALSE, 
+              include   = "all"
+            )
+        }
+      )
+    }
+    doParallel::stopImplicitCluster()
+
+  }
+
+  return(result)
+  
+}
+
+  
+
 #' Compare the observed compilation information with the expected compilation information using a binomial distribution.
 #' 
 #' @param observe The observe compile information.
