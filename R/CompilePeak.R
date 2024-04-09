@@ -618,7 +618,7 @@ binomialPeakCompile <- function(
         ) %>% unlist() %>% sum()
         }
       )
-    }
+    } %>% unlist()
 
     decrease.number <- foreach(n = split_n, .combine=c) %dopar% {
       lapply(
@@ -632,7 +632,7 @@ binomialPeakCompile <- function(
         ) %>% unlist() %>% sum()
         }
       )
-    }
+    } %>% unlist()
 
   }
 
@@ -676,7 +676,7 @@ binomialPeakCompile <- function(
         function(x){
           lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
         }
-      )
+      ) %>% unlist()
     }
 
     result <- foreach(n = split_n, .combine=rbind) %dopar% {
@@ -693,7 +693,7 @@ binomialPeakCompile <- function(
             lower.p = binom.test(
               decrease.number[x], length(expect.data), 0.5, alternative="greater")$p.value)
         }
-      )
+      ) %>% Reduce(rbind, .)
     }
 
   }
