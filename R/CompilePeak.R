@@ -670,7 +670,16 @@ binomialPeakCompile <- function(
     gc(verbose = FALSE)
     doParallel::registerDoParallel(parallel)
 
-    result <- foreach(n = split_n, .combine=c) %dopar% {
+    shuffle.mean <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+          lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
+        }
+      )
+    }
+
+    result <- foreach(n = split_n, .combine=rbind) %dopar% {
       lapply(
         n, 
         function(x){
