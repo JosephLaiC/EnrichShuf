@@ -703,6 +703,9 @@ binomialPeakCompile <- function(
 
   }
 
+  result$pval <- ifelse(result$log2FC > 0, result$upper.p, result$lower.p)
+  result$FDR <- p.adjust(result$pval, method="BH")
+
   return(result)
 
 }
