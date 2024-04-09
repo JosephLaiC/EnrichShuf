@@ -320,6 +320,79 @@ ShufFactorElementCorObj <- function(
 
 }
 
+#' Count the number of elements associated with factors within the specified distance.
+#'
+#' @param numbers The data included factors associated with each element, along with their distances.
+#' @param dist Distance to include associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all factors associated with elements. \cr
+#' \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
+#' \cr
+#' "downstream" -  Include all factors associated with elements at downstream.
+#'
+#' @export
+CountNumber <- function(
+  numbers, dist=1000000, intersect=FALSE, include="all") {
+
+  if (is.null(numbers)) {
+    return(0)
+  }
+
+  if (dist==0) {
+
+    result <- lapply(numbers, function(x){
+      sum(abs(x) == dist)
+    })
+
+  } else {
+    
+    if (isTRUE(intersect)) {
+
+      if (include=="all") {
+
+        result <- sum(abs(numbers) < dist)
+
+      } else if (include=="upstream") {
+
+        result <- sum(numbers <= 0 & abs(numbers) < dist)
+
+      } else if (include=="downstream") {
+
+        result <- sum(numbers >= 0 & abs(numbers) < dist)
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    } else {
+
+      if (include=="all") {
+
+        result <- sum(abs(numbers) <= dist & abs(numbers) > 0)
+
+      } else if (include=="upstream") {
+
+        result <- sum(numbers < 0 & abs(numbers) <= dist)
+
+      } else if (include=="downstream") {
+
+        result <- sum(numbers > 0 & abs(numbers) <= dist)
+
+      } else {
+        stop("Check the include parameter")
+      }
+
+    }
+
+  }
+
+  return(result)
+
+}
+
 #' Transform the data, which includes associated factors for each element along with their distances, into a data list.
 #' 
 #' @param data The data included factors associated with each element, along with their distances.
@@ -336,69 +409,128 @@ ShufFactorElementCorObj <- function(
 #' @export
 CompileInfo <- function(data, dist=1000000, intersect=FALSE, include="all") {
 
-  if (dist==0) {
+  result <- lapply(data, function(x){
+    CountNumber(x, dist=dist, intersect=intersect, include=include)
+  }) %>% unlist()
 
-    result <- lapply(data, function(x){
-      sum(abs(x) == dist)
-    })
+  return(result)
+
+}
+
+#' Compile the shuffle objects.
+#'
+#' @param dir The directory path to the shuffle files.
+#' @param shuffle_name The prefix of the shuffle files.
+#' @param ext_file The extension of the shuffle files.
+#' @param dist Distance information for associating factors to each element.
+#' @param intersect If set to TRUE, results will include the factor intersect with elements.
+#' @param include Could be specified one of the: \cr
+#' \cr
+#' "all" - Include all factors associated with elements. \cr
+#' \cr
+#' "upstream" - Include all factors associated with elements at upstream. \cr
+#' \cr
+#' "downstream" -  Include all factors associated with elements at downstream.
+#' @param shuffle_times The number of shuffle files.
+#' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
+#'
+#' @export
+shuffleCompile <- function(
+  dir, shuffle_name = "shuffle_", ext_file = ".rds", 
+  dist = NULL, intersect = FALSE, include = "all", 
+  shuffle_times = 100, parallel = 1) {
+
+  if (!is.character(dir)) {
+    stop("Check the dir input")
+  }
+  if (!dir.exists(dir)) {
+    stop("Check the dir exsist")
+  }
+
+  if (!is.character(shuffle_name)) {
+    stop("Check the shuffle_name input")
+  }
+
+  if (!is.character(ext_file)) {
+    stop("Check the ext_file input")
+  }
+
+  if (!is.numeric(sig_dist)) {
+    stop("Check the sig_dist input")
+  }
+
+  if (!is.numeric(shuffle_times)) {
+    stop("Check the shuffle_times input")
+  }
+
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
+  }
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
+  }
+
+  # Check the shuffle files
+  lapply(
+    1:shuffle_times, 
+    function(x) {
+      file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+      if (!file.exists(file)) {
+        stop("Check the shuffle files:", file, "exsist in path")
+      }
+    }
+  )
+
+  gc(verbose=FALSE)
+  if (parallel == 1) {
+
+    result <- lapply(
+      1:shuffle_nums, 
+      function(x) {
+        readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+          CompileInfo(
+            dist      = dist,
+            intersect = FALSE, 
+            include   = "all"
+          )
+      }
+    )
 
   } else {
-    
-    if (isTRUE(intersect)) {
 
-      if (include=="all") {
-
-        result <- lapply(data, function(x){
-          sum(abs(x) < dist)
-        })
-
-      } else if (include=="upstream") {
-
-        result <- lapply(data, function(x){
-          sum(x <= 0 & abs(x) < dist)
-        })
-
-      } else if (include=="downstream") {
-
-        result <- lapply(data, function(x){
-          sum(x >= 0 & abs(x) < dist)
-        })
-
-      } else {
-        stop("Check the include parameter")
-      }
-
+    if (shuffle_times < parallel) {
+      split_n <- split(1:shuffle_times, 1:shuffle_times)
     } else {
-
-      if (include=="all") {
-
-        result <- lapply(data, function(x){
-          sum(abs(x) <= dist & abs(x) > 0)
-        })
-
-      } else if (include=="upstream") {
-
-        result <- lapply(data, function(x){
-          sum(x < 0 & abs(x) <= dist)
-        })
-
-      } else if (include=="downstream") {
-
-        result <- lapply(data, function(x){
-          sum(x > 0 & abs(x) <= dist)
-        })
-
-      } else {
-        stop("Check the include parameter")
-      }
-
+      split_n <- split(1:shuffle_times, cut(1:shuffle_times, parallel))
     }
+
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    result <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x) {
+          readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+            CompileInfo(
+              dist      = dist,
+              intersect = FALSE, 
+              include   = "all"
+            )
+        }
+      )
+    }
+    doParallel::stopImplicitCluster()
 
   }
 
-  return(unlist(result))
-
+  return(result)
+  
 }
+
+  
 
 #' Compare the observed compilation information with the expected compilation information using a binomial distribution.
 #' 

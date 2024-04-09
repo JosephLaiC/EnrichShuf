@@ -589,7 +589,7 @@ ObsExpObj <- function(
 
     expect <- lapply(1:random.n, function(x)
       FactorShufCorrelate(
-        factor = factor, element = element, strand = strand, tag = tag, outloc = outloc, 
+        factor = factor, element = element, strand = strand, tag = tag, outloc = NULL, 
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
 
@@ -602,6 +602,7 @@ ObsExpObj <- function(
     } else {
       split_n <- split(1:random.n, cut(1:random.n, parallel))
     }
+
 
     expect <- foreach(n = split_n, .packages = "magrittr", .combine=c) %dopar% {
       lapply(n, function(x) {
