@@ -453,11 +453,6 @@ CountCorrelationByBin <- function(
 #' @param condition 	A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the occurrences for each condition 
 #' (e.g., intersections or specific distance ranges).
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @importFrom foreach %dopar% foreach
 #' @importFrom magrittr %>%
@@ -467,7 +462,7 @@ ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
   condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
-  parallel=1, parallel.type="mclapply") {
+  parallel=1) {
 
   if (is.character(factor)) {
     
@@ -666,23 +661,18 @@ ObsExpObj <- function(
 #' \cr
 #' "eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpObjEachBin <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  bin=1000, min=0, max=1000000, count.type="within", parallel=FALSE, parallel.type="mclapply") {
+  bin=1000, min=0, max=1000000, count.type="within", parallel=FALSE) {
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parallel=parallel, parallel.type=parallel.type)
+    condition=condition, parallel=parallel)
   return(result)
 
 }

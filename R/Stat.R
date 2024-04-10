@@ -39,15 +39,10 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
 #' @param data The input object contained the information of observed and expected number.
 #' @param log.p If TRUE, the log of p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpSTAT <-  function(
-  data, log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  data, log.p=FALSE, parallel=1) {
   
   if (!all(names(data)%in%c("observe", "expect"))) {
     stop("Please assign the result from ObsExpObj")
@@ -145,16 +140,11 @@ randomFactor <- function(list, seed=1, n=NULL) {
 #' @param random.num Times of randomization.
 #' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 TargetFactorSTAT <- function(
   factor, total=NULL, element=NULL, random.num=10000, 
-  log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  log.p=FALSE, parallel=1) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -258,16 +248,11 @@ TargetFactorSTAT <- function(
 #' @param random.num Times of randomization.
 #' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 twoFactorElementSTAT <- function(
   factorA=NULL, factorA.min=0, factorA.max=0, factorB=NULL, factorB.min=0, factorB.max=0, 
-  element=NULL, random.num=10000, log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  element=NULL, random.num=10000, log.p=FALSE, parallel=1) {
 
   if (is.null(factorA)) {
     stop("Please assign a character to factorA")
@@ -371,8 +356,7 @@ twoFactorElementSTAT <- function(
     element       = factorB.list, 
     random.num    = random.num, 
     log.p         = log.p, 
-    parallel      = parallel,
-    parallel.type = parallel.type)
+    parallel      = parallel)
 
   return(result)
 

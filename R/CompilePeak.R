@@ -7,16 +7,11 @@
 #' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
 #' and the analysis will take the strand information into consideration.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 FactorElementCorObj <- function(
   element, factor=factor, dist=1000000, strand=FALSE,
-  parallel=1, parallel.type="mclapply") {
+  parallel=1) {
   
   if (any(!is.numeric(parallel))) {
     stop("Check the parallel input is numeric")
@@ -231,11 +226,6 @@ FactorElementCorObj <- function(
 #' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
 #' and the analysis will take the strand information into consideration.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
 #' Each name-size pair should be listed on a separate line and delimited by a tab.
 #' @param incl The interval information to include the input regions.
@@ -245,8 +235,7 @@ FactorElementCorObj <- function(
 #' @export
 ShufFactorElementCorObj <- function(
   element, factor=factor, dist=1000000, strand=FALSE,
-  parallel=1, parallel.type="mclapply",
-  genome=genome, incl=NULL, excl=NULL, seed=1) {
+  parallel=1, genome=genome, incl=NULL, excl=NULL, seed=1) {
 
   if (is.character(factor)) {
     
@@ -313,8 +302,7 @@ ShufFactorElementCorObj <- function(
     factor        = shuffle, 
     dist          = dist, 
     strand        = strand, 
-    parallel      = parallel, 
-    parallel.type = parallel.type)
+    parallel      = parallel)
 
   return(result)
 
@@ -536,17 +524,12 @@ shuffleCompile <- function(
 #' 
 #' @param observe The observe compile information.
 #' @param expect.data The expect compile information. Typically will be a list.
+#' @param p.adjust If set to TRUE, the function will adjust the p-value using the FDR method.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #'
 #' @export
 binomialPeakCompile <- function(
-  observe, expect.data=expect.data, p.adjust=TRUE,
-  parallel=1, parallel.type="mclapply") {
+  observe, expect.data=expect.data, p.adjust=TRUE, parallel=1) {
 
   # / Check the input
   if (!is.numeric(observe)) {
