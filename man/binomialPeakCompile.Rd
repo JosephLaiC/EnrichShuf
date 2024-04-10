@@ -7,8 +7,8 @@
 binomialPeakCompile(
   observe,
   expect.data = expect.data,
-  parallel = 1,
-  parallel.type = "mclapply"
+  p.adjust = TRUE,
+  parallel = 1
 )
 }
 \arguments{
@@ -16,13 +16,9 @@ binomialPeakCompile(
 
 \item{expect.data}{The expect compile information. Typically will be a list.}
 
-\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
+\item{p.adjust}{If set to TRUE, the function will adjust the p-value using the FDR method.}
 
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
+\item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
 }
 \description{
 Compare the observed compilation information with the expected compilation information using a binomial distribution.
