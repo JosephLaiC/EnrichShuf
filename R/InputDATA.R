@@ -316,7 +316,7 @@ FactorShufCorrelate <- function(
 #' @export
 CountCorrelation <- function(
     data, intersect=TRUE,
-    condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000")){
+    condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "30000-40000", "40000-50000")){
 
   #library(readr); library(stringr)
 
@@ -463,7 +463,7 @@ CountCorrelationByBin <- function(
 ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
+  condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "30000-40000", "40000-50000"),
   parallel=1, parallel.type="mclapply") {
 
   if (is.character(factor)) {
