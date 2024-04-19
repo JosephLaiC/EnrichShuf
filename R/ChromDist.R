@@ -158,7 +158,7 @@ ObsExpChrOb <- function(
     expect <- lapply(
       1:random.n, 
       function(x) {
-        valr::bed_shuffle(feature, genomesize, seed = x) %>%
+        valr::bed_shuffle(factor, genomesize, seed = x) %>%
           group_by(chrom) %>%
           summarise(n = n()) %>%
           { setNames(.$n, .$chrom) }
@@ -181,7 +181,7 @@ ObsExpChrOb <- function(
       lapply(
         n, 
         function(x) {
-          valr::bed_shuffle(feature, genomesize, seed = x) %>%
+          valr::bed_shuffle(factor, genomesize, seed = x) %>%
             group_by(chrom) %>%
             summarise(n = n()) %>%
             { setNames(.$n, .$chrom) }
