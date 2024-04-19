@@ -39,15 +39,10 @@ ObsExpSTATbyName <- function(data, name=name, log.p=FALSE) {
 #' @param data The input object contained the information of observed and expected number.
 #' @param log.p If TRUE, the log of p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpSTAT <-  function(
-  data, log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  data, log.p=FALSE, parallel=1) {
   
   if (!all(names(data)%in%c("observe", "expect"))) {
     stop("Please assign the result from ObsExpObj")
@@ -78,8 +73,6 @@ ObsExpSTAT <-  function(
   ## Get charaters of names
   name_chr <- names(observe)
 
-
-
   if (parallel==1) {
 
     result <- lapply(name_chr, function(x){
@@ -90,25 +83,23 @@ ObsExpSTAT <-  function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
-
-      result <- parallel::mclapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }, mc.cores=parallel) %>% Reduce(rbind, .)
-
-    } else if (parallel.type=="bplapply") {
-
-      result <- BiocParallel::bplapply(name_chr, function(x){
-
-        ObsExpSTATbyName(data, name=x, log.p=log.p)
-
-      }) %>% Reduce(rbind, .)
-
+    # // regist parallel
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    # // get index for parallel (list)
+    if (length(name_chr) < parallel) {
+      split_n <- split(1:length(name_chr), 1:length(name_chr))
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:length(name_chr), cut(1:length(name_chr), parallel))
     }
+
+    # // apply parallel
+    result <- foreach(n = split_n, .combine=rbind) %dopar% {
+      lapply(n, function(x){
+        ObsExpSTATbyName(data, name=name_chr[x], log.p=log.p)
+      }) %>% Reduce(rbind, .)
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
@@ -149,16 +140,11 @@ randomFactor <- function(list, seed=1, n=NULL) {
 #' @param random.num Times of randomization.
 #' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 TargetFactorSTAT <- function(
   factor, total=NULL, element=NULL, random.num=10000, 
-  log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  log.p=FALSE, parallel=1) {
 
   if (is.null(total)) {
     stop("Please assign a character to total")
@@ -207,27 +193,26 @@ TargetFactorSTAT <- function(
 
   } else if (parallel > 1) {
 
-    if (parallel.type=="mclapply") {
 
-      expect.num <- parallel::mclapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-        }, mc.cores=parallel) %>% unlist()
-
-    } else if (parallel.type=="bplapply") {
-
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-      expect.num <- BiocParallel::bplapply(1:random.num, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-      }) %>% unlist()
-      BiocParallel::register(BiocParallel::SerialParam())
-
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+    if (random.num < parallel) {
+      split_n <- split(1:random.num, 1:random.num)
     } else {
-      stop("Please assign parallel.type as mclapply or bplapply")
+      split_n <- split(1:random.num, cut(1:random.num, parallel))
     }
+    
+    expect.num <- foreach(n = split_n, .combine=c) %dopar% {
+      sapply(n, function(x) { 
+        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
+      })
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
     stop("Please assign the number over 1 of cores to run the process")
   }
+
 
   mean <- mean(expect.num)
   sd   <- sd(expect.num)
@@ -263,16 +248,11 @@ TargetFactorSTAT <- function(
 #' @param random.num Times of randomization.
 #' @param log.p If set to TRUE, the logarithm of the p-value will be returned.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 twoFactorElementSTAT <- function(
   factorA=NULL, factorA.min=0, factorA.max=0, factorB=NULL, factorB.min=0, factorB.max=0, 
-  element=NULL, random.num=10000, log.p=FALSE, parallel=1, parallel.type="mclapply") {
+  element=NULL, random.num=10000, log.p=FALSE, parallel=1) {
 
   if (is.null(factorA)) {
     stop("Please assign a character to factorA")
@@ -376,8 +356,7 @@ twoFactorElementSTAT <- function(
     element       = factorB.list, 
     random.num    = random.num, 
     log.p         = log.p, 
-    parallel      = parallel,
-    parallel.type = parallel.type)
+    parallel      = parallel)
 
   return(result)
 
