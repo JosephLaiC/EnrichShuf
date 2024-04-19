@@ -429,7 +429,7 @@ CountCorrelationByBin <- function(
     data, intersect=TRUE, bin=1000, min=0, max=1000000, count.type="within"){
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
-  result    <- CountCorrelation_factor(data, intersect=intersect, condition=condition)
+  result    <- CountCorrelation(data, intersect=intersect, condition=condition)
   return(result)
 
 }

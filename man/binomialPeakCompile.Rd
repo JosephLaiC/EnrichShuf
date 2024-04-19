@@ -7,6 +7,7 @@
 binomialPeakCompile(
   observe,
   expect.data = expect.data,
+  p.adjust = TRUE,
   parallel = 1,
   parallel.type = "mclapply"
 )
