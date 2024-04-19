@@ -174,7 +174,7 @@ ObsExpChrOb <- function(
       split_n <- split(1:random.n, cut(1:random.n, parallel))
     }
 
-    expected_dat <- foreach(
+    expected <- foreach(
       n = split_n, .packages = "magrittr", .combine=c
     ) %dopar% {
 
