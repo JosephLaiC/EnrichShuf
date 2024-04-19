@@ -16,8 +16,10 @@ ObsExpObj(
   excl = NULL,
   random.n = 10000,
   intersect = TRUE,
-  condition = c("0-3000", "3000-10000", "10000-20000", "20000-30000", "40000-50000"),
-  parallel = 1
+  condition = c("0-3000", "3000-10000", "10000-20000", "20000-30000", "30000-40000",
+    "40000-50000"),
+  parallel = 1,
+  parallel.type = "mclapply"
 )
 }
 \arguments{
