@@ -518,7 +518,8 @@ shuffleCompile <- function(
     result <- lapply(
       1:shuffle_nums, 
       function(x) {
-        readRDS(file.path(root_dir, dir, paste0("shuffle_", x, ".rds"))) %>%
+        file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+        readRDS(file) %>%
           CompileInfo(
             dist      = dist,
             intersect = FALSE, 
@@ -541,7 +542,8 @@ shuffleCompile <- function(
       lapply(
         n, 
         function(x) {
-          readRDS(file.path(root_dir, dir, paste0("shuffle_", x, ".rds"))) %>%
+          file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+          readRDS(file) %>%
             CompileInfo(
               dist      = dist,
               intersect = FALSE, 
