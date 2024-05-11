@@ -483,7 +483,7 @@ shuffleCompile <- function(
     stop("Check the ext_file input")
   }
 
-  if (!is.numeric(sig_dist)) {
+  if (!is.numeric(dist)) {
     stop("Check the sig_dist input")
   }
 
@@ -518,7 +518,8 @@ shuffleCompile <- function(
     result <- lapply(
       1:shuffle_nums, 
       function(x) {
-        readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+        file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+        readRDS(file) %>%
           CompileInfo(
             dist      = dist,
             intersect = FALSE, 
@@ -541,7 +542,8 @@ shuffleCompile <- function(
       lapply(
         n, 
         function(x) {
-          readRDS(file.path(root_dir, rds_dir, paste0("shuffle_", x, ".rds"))) %>%
+          file <- file.path(dir, paste0(shuffle_name, x, ext_file))
+          readRDS(file) %>%
             CompileInfo(
               dist      = dist,
               intersect = FALSE, 
@@ -558,7 +560,7 @@ shuffleCompile <- function(
   
 }
 
-  
+
 
 #' Compare the observed compilation information with the expected compilation information using a binomial distribution.
 #' 
