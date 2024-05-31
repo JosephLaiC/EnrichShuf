@@ -97,14 +97,14 @@ FactorElementCorrelate <- function(
   if (length(multi.overlap) > 0) {
     
     multi.info <- intersect %>%
-      filter(factor_name %in% multi.overlap) %>%
+      dplyr::filter(factor_name %in% multi.overlap) %>%
       ## Sort by factor_name -> overlap_length -> element_name
-      arrange(factor_name, desc(overlap), element_name) %>%
-      group_by(factor_name) %>%
-      summarize(across(everything(), first), .groups = "drop")
+      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
+      dplyr::group_by(factor_name) %>%
+      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
     
-    intersect.info <- rbind(
-      intersect[!intersect$factor_name%in%multi.overlap,], multi.info) 
+    intersect.info <- dplyr::bind_rows(
+      intersect[!intersect$factor_name %in% multi.overlap,], multi.info) 
     
   } else {
     
@@ -112,21 +112,21 @@ FactorElementCorrelate <- function(
     
   }
   
-  associate <- table[!table$factor_name%in%intersect.info$factor_name,]
+  associate <- table[!table$factor_name %in% intersect.info$factor_name,]
   multi.associate <- table(associate$factor_name) %>% 
     { .[which(.>1)] } %>% names()
   
   if (length(multi.associate) > 0) {
     
     multi.info <- associate %>%
-      filter(factor_name %in% multi.associate) %>%
+      dplyr::filter(factor_name %in% multi.associate) %>%
       ## Sort by factor_name -> overlap_length -> element_name
-      arrange(factor_name, desc(overlap), element_name) %>%
-      group_by(factor_name) %>%
-      summarize(across(everything(), first), .groups = "drop")
+      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
+      dplyr::group_by(factor_name) %>%
+      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
     
-    associate.info <- rbind(
-      associate[!associate$factor_name%in%multi.associate,], multi.info) 
+    associate.info <- dplyr::bind_rows(
+      associate[!associate$factor_name %in% multi.associate,], multi.info) 
     
   } else {
     
@@ -134,7 +134,7 @@ FactorElementCorrelate <- function(
     
   }
   
-  result <- rbind(intersect.info, associate.info)
+  result <- dplyr::bind_rows(intersect.info, associate.info)
   
   result$annotation <- NA
   
@@ -142,14 +142,14 @@ FactorElementCorrelate <- function(
     
     element <- data.frame(element)
     
-    if (!all(unique(element$strand)%in%c("+", "-"))) {
+    if (!all(unique(element$strand) %in% c("+", "-"))) {
       stop("Check the element strand information")
     }
     
     forward <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name%in%.,] }
+      { result[result$element_name %in% .,] }
     reverse <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name%in%.,] }
+      { result[result$element_name %in% .,] }
     
     forward[which(forward$distance==0),"annotation"] <- "overlap"
     forward[which(forward$distance <0),"annotation"] <- "upstream"
@@ -159,7 +159,7 @@ FactorElementCorrelate <- function(
     reverse[which(reverse$distance <0),"annotation"] <- "downstream"
     reverse[which(reverse$distance >0),"annotation"] <- "upstream" 
     
-    result <- rbind(forward, reverse)
+    result <- dplyr::bind_rows(forward, reverse)
     
   } else {
     
@@ -184,16 +184,16 @@ FactorElementCorrelate <- function(
   }
   
   if (!is.null(outloc)) {
-
+    
     if (!is.character(outloc)) {
       stop("Check the output location")
     }
-
+    
     write.table(
       result, outloc, sep="\t", quote=FALSE, row.names=FALSE)
-
+    
   }
-
+  
   return(result)
   
 }
