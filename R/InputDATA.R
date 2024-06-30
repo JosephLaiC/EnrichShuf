@@ -97,14 +97,14 @@ FactorElementCorrelate <- function(
   if (length(multi.overlap) > 0) {
     
     multi.info <- intersect %>%
-      filter(factor_name %in% multi.overlap) %>%
+      dplyr::filter(factor_name %in% multi.overlap) %>%
       ## Sort by factor_name -> overlap_length -> element_name
-      arrange(factor_name, desc(overlap), element_name) %>%
-      group_by(factor_name) %>%
-      summarize(across(everything(), first), .groups = "drop")
+      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
+      dplyr::group_by(factor_name) %>%
+      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
     
-    intersect.info <- rbind(
-      intersect[!intersect$factor_name%in%multi.overlap,], multi.info) 
+    intersect.info <- dplyr::bind_rows(
+      intersect[!intersect$factor_name %in% multi.overlap,], multi.info) 
     
   } else {
     
@@ -112,21 +112,21 @@ FactorElementCorrelate <- function(
     
   }
   
-  associate <- table[!table$factor_name%in%intersect.info$factor_name,]
+  associate <- table[!table$factor_name %in% intersect.info$factor_name,]
   multi.associate <- table(associate$factor_name) %>% 
     { .[which(.>1)] } %>% names()
   
   if (length(multi.associate) > 0) {
     
     multi.info <- associate %>%
-      filter(factor_name %in% multi.associate) %>%
+      dplyr::filter(factor_name %in% multi.associate) %>%
       ## Sort by factor_name -> overlap_length -> element_name
-      arrange(factor_name, desc(overlap), element_name) %>%
-      group_by(factor_name) %>%
-      summarize(across(everything(), first), .groups = "drop")
+      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
+      dplyr::group_by(factor_name) %>%
+      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
     
-    associate.info <- rbind(
-      associate[!associate$factor_name%in%multi.associate,], multi.info) 
+    associate.info <- dplyr::bind_rows(
+      associate[!associate$factor_name %in% multi.associate,], multi.info) 
     
   } else {
     
@@ -134,7 +134,7 @@ FactorElementCorrelate <- function(
     
   }
   
-  result <- rbind(intersect.info, associate.info)
+  result <- dplyr::bind_rows(intersect.info, associate.info)
   
   result$annotation <- NA
   
@@ -142,14 +142,14 @@ FactorElementCorrelate <- function(
     
     element <- data.frame(element)
     
-    if (!all(unique(element$strand)%in%c("+", "-"))) {
+    if (!all(unique(element$strand) %in% c("+", "-"))) {
       stop("Check the element strand information")
     }
     
     forward <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name%in%.,] }
+      { result[result$element_name %in% .,] }
     reverse <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name%in%.,] }
+      { result[result$element_name %in% .,] }
     
     forward[which(forward$distance==0),"annotation"] <- "overlap"
     forward[which(forward$distance <0),"annotation"] <- "upstream"
@@ -159,7 +159,7 @@ FactorElementCorrelate <- function(
     reverse[which(reverse$distance <0),"annotation"] <- "downstream"
     reverse[which(reverse$distance >0),"annotation"] <- "upstream" 
     
-    result <- rbind(forward, reverse)
+    result <- dplyr::bind_rows(forward, reverse)
     
   } else {
     
@@ -184,16 +184,16 @@ FactorElementCorrelate <- function(
   }
   
   if (!is.null(outloc)) {
-
+    
     if (!is.character(outloc)) {
       stop("Check the output location")
     }
-
+    
     write.table(
       result, outloc, sep="\t", quote=FALSE, row.names=FALSE)
-
+    
   }
-
+  
   return(result)
   
 }
@@ -453,18 +453,16 @@ CountCorrelationByBin <- function(
 #' @param condition 	A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the occurrences for each condition 
 #' (e.g., intersections or specific distance ranges).
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
+#' 
+#' @importFrom foreach %dopar% foreach
+#' @importFrom magrittr %>%
 #' 
 #' @export
 ObsExpObj <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
   condition=c("0-3000", "3000-10000", "10000-20000", "20000-30000", "30000-40000", "40000-50000"),
-  parallel=1, parallel.type="mclapply") {
+  parallel=1) {
 
   if (is.character(factor)) {
     
@@ -590,33 +588,26 @@ ObsExpObj <- function(
         genome = genome, incl = incl, seed = x) %>% 
       CountCorrelation(intersect = intersect, condition = condition))
 
-  } else if (parallel>1) {
+  } else if (parallel > 1) {
     
     gc(verbose = FALSE)
-
-    if (parallel.type=="mclapply") {
-
-      expect <- parallel::mclapply(1:random.n, function(x) {
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = NULL, 
-          genome = genome, incl = incl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition)
-      } ,mc.cores = parallel)
-
-    } else if (parallel.type=="bplapply") {
-
-      BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-      expect <- BiocParallel::bplapply(1:random.n, function(x) {
-        FactorShufCorrelate(
-          factor = factor, element = element, strand = strand, tag = tag, outloc = NULL, 
-          genome = genome, incl = incl, seed = x) %>% 
-        CountCorrelation(intersect = intersect, condition = condition)
-      })
-      BiocParallel::register(BiocParallel::SerialParam())
-
+    doParallel::registerDoParallel(parallel)
+    if (random.n < parallel) {
+      split_n <- split(1:random.n, 1:random.n)
+    } else {
+      split_n <- split(1:random.n, cut(1:random.n, parallel))
     }
-    
-    
+
+
+    expect <- foreach(n = split_n, .packages = "magrittr", .combine=c) %dopar% {
+      lapply(n, function(x) {
+        FactorShufCorrelate(
+          factor = factor, element = element, strand = strand, 
+          tag = tag, outloc = outloc, genome = genome, incl = incl, seed = x) %>% 
+          CountCorrelation(intersect = intersect, condition = condition)
+      })
+    }
+    doParallel::stopImplicitCluster()
 
   } else {
 
@@ -670,23 +661,18 @@ ObsExpObj <- function(
 #' \cr
 #' "eachBin"   - Output a string of intervals based on specified bin sizes, dividing the range of distances into equal segments.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 ObsExpObjEachBin <- function(
   factor, element=element, strand=FALSE, tag=FALSE, outloc=NULL, 
   genome=genome, incl=NULL, excl=NULL, random.n=10000, intersect=TRUE,
-  bin=1000, min=0, max=1000000, count.type="within", parallel=FALSE, parallel.type="mclapply") {
+  bin=1000, min=0, max=1000000, count.type="within", parallel=FALSE) {
 
   condition <- BinsDefine(bin=bin, min=min, max=max, type=count.type)
   result    <- ObsExpObj(
     factor, element=element, strand=strand, tag=tag, outloc=outloc, 
     genome=genome, incl=incl, excl=excl, random.n=random.n, intersect=intersect,
-    condition=condition, parallel=parallel, parallel.type=parallel.type)
+    condition=condition, parallel=parallel)
   return(result)
 
 }

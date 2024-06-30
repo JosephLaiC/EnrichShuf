@@ -7,23 +7,20 @@
 #' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
 #' and the analysis will take the strand information into consideration.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' 
 #' @export
 FactorElementCorObj <- function(
   element, factor=factor, dist=1000000, strand=FALSE,
-  parallel=1, parallel.type="mclapply") {
+  parallel=1) {
   
   if (any(!is.numeric(parallel))) {
     stop("Check the parallel input is numeric")
   }
-
-  if (!parallel > 0) {
-    stop("Check the parallel input is larger than 0")
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
   }
 
   if (!is.numeric(dist)) {
@@ -100,151 +97,121 @@ FactorElementCorObj <- function(
     
   }
 
-  gc(verbose=FALSE)
-  if (isTRUE(strand)) {
-      
-    plus.element  <- element[element$strand=="+",]
-    minus.element <- element[element$strand=="-",]
-      
-    if (parallel > 1) {
+  if (parallel == 1) {
+
+    if (isTRUE(strand)) {
         
-      ## Create the index for parallel
-      plus.idx.num <- seq(1, nrow(plus.element), ceiling(nrow(plus.element)/parallel))
-      plus.idx <- data.frame(
-        start = plus.idx.num,
-        end = c(plus.idx.num[-1]-1, nrow(plus.element)))
-
-      minus.idx.num <- seq(1, nrow(minus.element), ceiling(nrow(minus.element)/parallel))
-      minus.idx <- data.frame(
-        start = minus.idx.num,
-        end = c(minus.idx.num[-1]-1, nrow(minus.element)))
-
-      if (parallel.type=="mclapply") {
-          
-        plus.result <- parallel::mclapply(1:nrow(plus.idx), function(x) {
-          start <- plus.idx[x,1]; end <- plus.idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, plus.element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
-          
-
-        minus.result <- parallel::mclapply(1:nrow(minus.idx), function(x) {
-          start <- minus.idx[x,1]; end <- minus.idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, minus.element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist * -1
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
+        ## // make the element to plus and minus strand
+        plus.element  <- element[element$strand=="+",]
+        minus.element <- element[element$strand=="-",]
         
-      } else if (parallel.type=="bplapply") {
-          
-        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-        plus.result <- BiocParallel::bplapply(1:nrow(plus.element), function(x) {
+        plus.result <- lapply(1:nrow(plus.element), function(x) {
           table <- valr::bed_closest(factor, plus.element[x,]) %>% 
             filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
           number <- table$.dist
-          names(number) <- table$factor_name
+          names(number) <- table$factor_name.x
           number
         })
-          
-        minus.result <- BiocParallel::bplapply(1:nrow(minus.element), function(x) {
+        
+        minus.result <- lapply(1:nrow(minus.element), function(x) {
           table <- valr::bed_closest(factor, minus.element[x,]) %>% 
             filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-          number <- table$.dist
-          names(number) <- table$factor_name
+          number <- table$.dist * -1
+          names(number) <- table$factor_name.x
           number
         })
-        BiocParallel::register(BiocParallel::SerialParam())
-          
-      } 
         
-    } else if (parallel==1) {
+        result <- c(plus.result, minus.result)
         
-      plus.result <- lapply(1:nrow(plus.element), function(x) {
-        table <- valr::bed_closest(factor, plus.element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist
-        names(number) <- table$factor_name
-        number
-      })
+      } else if (!isTRUE(strand)) {
         
-      minus.result <- lapply(1:nrow(minus.element), function(x) {
-        table <- valr::bed_closest(factor, minus.element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist * -1
-        names(number) <- table$factor_name
-        number
-      })
-        
-    }
-      
-    result <- c(plus.result, minus.result)
-    
-  } else if (!isTRUE(strand)) {
-    
-    if (parallel > 1) {
-      
-      idx.num <- seq(1, nrow(element), ceiling(nrow(element)/parallel))
-      idx <- data.frame(
-        start = idx.num,
-        end = c(idx.num[-1]-1, nrow(element)))
-
-      if (parallel.type=="mclapply") {
-        
-        result <- parallel::mclapply(1:nrow(idx), function(x) {
-          start <- idx[x,1]; end <- idx[x,2]
-          lapply(start:end, function(y){
-
-            table <- valr::bed_closest(factor, element[y,]) %>% 
-              filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-            number <- table$.dist
-            names(number) <- table$factor_name.x
-            number
-
-          })
-        }, mc.cores=parallel) %>% Reduce(c, .)
-        
-        
-      } else if (parallel.type=="bplapply") {
-        
-        BiocParallel::register(BiocParallel::MulticoreParam(workers = parallel))
-        result <- BiocParallel::bplapply(1:nrow(element), function(x) {
+        result <- lapply(1:nrow(element), function(x) {
           table <- valr::bed_closest(factor, element[x,]) %>% 
-            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist) %>% data.frame()
-          number <- table[,1]
-          names(number) <- table[,2]
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
           number
         })
-        BiocParallel::register(BiocParallel::SerialParam())
-        
+    }
+
+  } else {
+
+    if (isTRUE(strand)) {
+
+      ## // make the element to plus and minus strand
+      plus.element  <- element[element$strand=="+",]
+      minus.element <- element[element$strand=="-",]
+
+      ## Create the index for parallel
+      if (nrow(plus.element) < parallel) {
+        split_n <- split(1:nrow(plus.element), 1:nrow(plus.element))
+      } else {
+        split_n <- split(1:nrow(plus.element), cut(1:nrow(plus.element), parallel))
       }
 
-      
+      if (nrow(minus.element) < parallel) {
+        split_n_minus <- split(1:nrow(minus.element), 1:nrow(minus.element))
+      } else {
+        split_n_minus <- split(1:nrow(minus.element), cut(1:nrow(minus.element), parallel))
+      }
+
+      # Run the parallel
+      gc(verbose = FALSE)
+      doParallel::registerDoParallel(parallel)
+
+      plus.result <- foreach(n = split_n, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, plus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
+      gc(verbose = FALSE)
+      minus.result <- foreach(n = split_n_minus, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, minus.element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist * -1
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
+      result <- c(plus.result, minus.result)
+
     } else {
-      
-      result <- lapply(1:nrow(element), function(x) {
-        table <- valr::bed_closest(factor, element[x,]) %>% 
-          filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
-        number <- table$.dist
-        names(number) <- table$factor_name.x
-        number
-      })
-      
+
+      ## Create the index for parallel
+      if (nrow(element) < parallel) {
+        split_n <- split(1:nrow(element), 1:nrow(element))
+      } else {
+        split_n <- split(1:nrow(element), cut(1:nrow(element), parallel))
+      }
+
+      # Run the parallel
+      gc(verbose = FALSE)
+      doParallel::registerDoParallel(parallel)
+
+      result <- foreach(n = split_n, .combine=c) %dopar% {
+        lapply(n, function(x) {
+          table <- valr::bed_closest(factor, element[x,]) %>% 
+            filter(abs(.dist) <= dist) %>% select(factor_name.x, .dist)
+          number <- table$.dist
+          names(number) <- table$factor_name.x
+          number
+        })
+      }
+      doParallel::stopImplicitCluster()
+
     }
-  }
-  
+
+  } 
+
   names(result) <- data.frame(element)[,4]
   return(result)
   
@@ -259,11 +226,6 @@ FactorElementCorObj <- function(
 #' @param strand If set to TRUE, it means that the input element contains strand information in column 6, 
 #' and the analysis will take the strand information into consideration.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #' @param genome This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
 #' Each name-size pair should be listed on a separate line and delimited by a tab.
 #' @param incl The interval information to include the input regions.
@@ -273,8 +235,7 @@ FactorElementCorObj <- function(
 #' @export
 ShufFactorElementCorObj <- function(
   element, factor=factor, dist=1000000, strand=FALSE,
-  parallel=1, parallel.type="mclapply",
-  genome=genome, incl=NULL, excl=NULL, seed=1) {
+  parallel=1, genome=genome, incl=NULL, excl=NULL, seed=1) {
 
   if (is.character(factor)) {
     
@@ -341,8 +302,7 @@ ShufFactorElementCorObj <- function(
     factor        = shuffle, 
     dist          = dist, 
     strand        = strand, 
-    parallel      = parallel, 
-    parallel.type = parallel.type)
+    parallel      = parallel)
 
   return(result)
 
@@ -566,22 +526,29 @@ shuffleCompile <- function(
 #' 
 #' @param observe The observe compile information.
 #' @param expect.data The expect compile information. Typically will be a list.
+#' @param p.adjust If set to TRUE, the function will adjust the p-value using the FDR method.
 #' @param parallel If a number greater than 1 is assigned, the function will run in parallel.
-#' @param parallel.type Could be specify one of: \cr
-#' \cr
-#' "mclapply" - Apply malapply to perform the run in parallel.\cr
-#' \cr
-#' "bplapply" - Apply bplapply to perfrom the run in parallel.
 #'
 #' @export
 binomialPeakCompile <- function(
-  observe, expect.data=expect.data, p.adjust=TRUE,
-  parallel=1, parallel.type="mclapply") {
+  observe, expect.data=expect.data, p.adjust=TRUE, parallel=1) {
 
-   if (!is.numeric(observe)) {
+  # / Check the input
+  if (!is.numeric(observe)) {
     stop("Check the observe data")
   }
+
+  if (any(!is.numeric(parallel))) {
+    stop("Check the parallel input is numeric")
+  }
+  if (length(parallel) > 1) {
+    stop("Check the parallel input is a single number")
+  }
+  if (!parallel > 1) {
+    stop("Check the parallel input is larger than 1")
+  }
   
+  # / Check the observe and expect data
   lapply(expect.data, function(x){
     
     if (!is.numeric(x)) {
@@ -594,98 +561,72 @@ binomialPeakCompile <- function(
     
   })
 
+  # / get logic list
   increase.logic <- lapply(expect.data, function(x){observe > x})
   decrease.logic <- lapply(expect.data, function(x){observe < x})
 
-  if (parallel > 1) {
-
-    if (parallel.type=="mclapply") {
-
-      idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-      idx <- data.frame(
-        start = idx.num,
-        end = c(idx.num[-1]-1, length(observe)))
-
-      gc(verbose = FALSE)
-      increase.number <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(increase.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
-        })
-      }, mc.cores = parallel) %>% unlist()
-
-      gc(verbose = FALSE)
-      decrease.number <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(decrease.logic, function(z){z[[y]]}) %>% unlist() %>% sum()
-        })
-      }, mc.cores = parallel) %>% unlist()
-
-    }
+  # / get the number of increase and decrease from the logic list
+  if (parallel == 1) {
+      
+    increase.number <- lapply(1:length(observe), function(x){
+          
+      lapply(increase.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+    
+    }) %>% unlist()
+  
+    decrease.number <- lapply(1:length(observe), function(x){
+          
+      lapply(decrease.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
+    
+    }) %>% unlist()
 
   } else {
 
-    increase.number <- lapply(1:length(observe), function(x){
-        
-        lapply(increase.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
-  
-    }) %>% unlist()
+    if (length(observe) < parallel) {
+      split_n <- split(1:length(observe), 1:length(observe))
+    } else {
+      split_n <- split(1:length(observe), cut(1:length(observe), parallel))
+    }
 
-    decrease.number <- lapply(1:length(observe), function(x){
-        
-        lapply(decrease.logic, function(y){y[[x]]}) %>% unlist() %>% sum()
-  
-    }) %>% unlist()
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+
+    increase.number <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+        lapply(
+          increase.logic, 
+          function(y){
+            y[[x]]
+          }
+        ) %>% unlist() %>% sum()
+        }
+      )
+    } %>% unlist()
+
+    decrease.number <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+        lapply(
+          decrease.logic, 
+          function(y){
+            y[[x]]
+          }
+        ) %>% unlist() %>% sum()
+        }
+      )
+    } %>% unlist()
 
   }
 
-  if (parallel > 1) {
-
-    idx.num <- seq(1, length(observe), ceiling(length(observe)/parallel))
-    idx <- data.frame(
-      start = idx.num,
-      end = c(idx.num[-1]-1, length(observe)))
-    
-    if (parallel.type=="mclapply") {
-
-      gc(verbose = FALSE)
-      shuffle.mean <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          lapply(expect.data, function(z){z[y]}) %>% unlist() %>% mean()
-        }) %>% unlist()
-
-      }, mc.cores = parallel) %>% unlist()
-
-      gc(verbose = FALSE)
-      result <- parallel::mclapply(1:nrow(idx), function(x){
-
-        start <- idx[x,1]; end <- idx[x,2]
-        lapply(start:end, function(y){
-          data.frame(
-            name    = names(observe)[y],
-            observe = observe[y],
-            expect  = shuffle.mean[y],
-            log2FC  = log2(observe[y]/shuffle.mean[y]),
-            upper.p = binom.test(
-              increase.number[y], length(expect.data), 0.5, alternative="greater")$p.value,
-            lower.p = binom.test(
-              decrease.number[y], length(expect.data), 0.5, alternative="greater")$p.value)
-        }) %>% Reduce(rbind, .)
-
-      }, mc.cores = parallel) %>% Reduce(rbind, .)
-
-    }
-
-  } else {
+  # / calculate the shuffle mean for getting the log2FC and calculate the p-value by binomial test
+  if (parallel == 1) {
 
     shuffle.mean <- lapply(1:length(observe), function(x){
         
-        lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
+      lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
   
     }) %>% unlist()
 
@@ -695,7 +636,7 @@ binomialPeakCompile <- function(
           name    = names(observe)[x],
           observe = observe[x],
           expect  = shuffle.mean[x],
-          log2FC  = log2(observe[x] + 1) - log2(shuffle.mean[x] + 1),
+          log2FC  = log2(observe[x]+1) - log2(shuffle.mean[x]+1),
           upper.p = binom.test(
             increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
           lower.p = binom.test(
@@ -703,13 +644,50 @@ binomialPeakCompile <- function(
   
     }) %>% Reduce(rbind, .)
 
+  } else {
+
+    if (length(observe) < parallel) {
+      split_n <- split(1:length(observe), 1:length(observe))
+    } else {
+      split_n <- split(1:length(observe), cut(1:length(observe), parallel))
+    }
+
+    gc(verbose = FALSE)
+    doParallel::registerDoParallel(parallel)
+
+    shuffle.mean <- foreach(n = split_n, .combine=c) %dopar% {
+      lapply(
+        n, 
+        function(x){
+          lapply(expect.data, function(y){y[x]}) %>% unlist() %>% mean()
+        }
+      ) %>% unlist()
+    }
+
+    result <- foreach(n = split_n, .combine=rbind) %dopar% {
+      lapply(
+        n, 
+        function(x){
+          data.frame(
+            name    = names(observe)[x],
+            observe = observe[x],
+            expect  = shuffle.mean[x],
+            log2FC  = log2(observe[x]+1) - log2(shuffle.mean[x]+1),
+            upper.p = binom.test(
+              increase.number[x], length(expect.data), 0.5, alternative="greater")$p.value,
+            lower.p = binom.test(
+              decrease.number[x], length(expect.data), 0.5, alternative="greater")$p.value)
+        }
+      ) %>% Reduce(rbind, .)
+    }
+
   }
 
   result$pval <- ifelse(result$log2FC > 0, result$upper.p, result$lower.p)
 
   if (isTRUE(p.adjust)) {
-    result$upper.FDR <- p.adjust(result$upper.p, method=p.adjust)
-    result$lower.FDR <- p.adjust(result$lower.p, method=p.adjust)
+    result$upper.FDR <- p.adjust(result$upper.p, method="fdr")
+    result$lower.FDR <- p.adjust(result$lower.p, method="fdr")
     result$FDR <- ifelse(result$log2FC > 0, result$upper.FDR, result$lower.FDR)
   }
 

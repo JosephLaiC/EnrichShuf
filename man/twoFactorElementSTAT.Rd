@@ -15,8 +15,7 @@ twoFactorElementSTAT(
   element = NULL,
   random.num = 10000,
   log.p = FALSE,
-  parallel = 1,
-  parallel.type = "mclapply"
+  parallel = 1
 )
 }
 \arguments{
@@ -42,12 +41,6 @@ If factorB falls within this range of distances, it will be included.}
 \item{log.p}{If set to TRUE, the logarithm of the p-value will be returned.}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
 Associate two interval-based factors on the genome within elements, 
