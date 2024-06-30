@@ -9,8 +9,7 @@ FactorElementCorObj(
   factor = factor,
   dist = 1e+06,
   strand = FALSE,
-  parallel = 1,
-  parallel.type = "mclapply"
+  parallel = 1
 )
 }
 \arguments{
@@ -24,12 +23,6 @@ FactorElementCorObj(
 and the analysis will take the strand information into consideration.}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
 Associate the factors to each element with specified distance, and compile the information to an object.

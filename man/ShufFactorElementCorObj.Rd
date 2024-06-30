@@ -11,7 +11,6 @@ ShufFactorElementCorObj(
   dist = 1e+06,
   strand = FALSE,
   parallel = 1,
-  parallel.type = "mclapply",
   genome = genome,
   incl = NULL,
   excl = NULL,
@@ -29,12 +28,6 @@ ShufFactorElementCorObj(
 and the analysis will take the strand information into consideration.}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 
 \item{genome}{This parameter specifies the data or file path containing the names and sizes of chromosomes or contigs. 
 Each name-size pair should be listed on a separate line and delimited by a tab.}

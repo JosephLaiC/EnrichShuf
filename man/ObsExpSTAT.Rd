@@ -5,7 +5,7 @@
 \title{Calculate the p-value by comparing the observed value to an empirical model constructed 
 from expected values with each range of distances (condition).}
 \usage{
-ObsExpSTAT(data, log.p = FALSE, parallel = 1, parallel.type = "mclapply")
+ObsExpSTAT(data, log.p = FALSE, parallel = 1)
 }
 \arguments{
 \item{data}{The input object contained the information of observed and expected number.}
@@ -13,12 +13,6 @@ ObsExpSTAT(data, log.p = FALSE, parallel = 1, parallel.type = "mclapply")
 \item{log.p}{If TRUE, the log of p-value will be returned.}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
 Calculate the p-value by comparing the observed value to an empirical model constructed 

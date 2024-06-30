@@ -19,8 +19,7 @@ ObsExpObjEachBin(
   min = 0,
   max = 1e+06,
   count.type = "within",
-  parallel = FALSE,
-  parallel.type = "mclapply"
+  parallel = FALSE
 )
 }
 \arguments{
@@ -54,12 +53,6 @@ Each name-size pair should be listed on a separate line and delimited by a tab.}
 \item{max}{Maximum number of conditions}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 
 \item{type}{Could be specify: \cr
 \cr

@@ -50,12 +50,6 @@ Each name-size pair should be listed on a separate line and delimited by a tab.}
 (e.g., intersections or specific distance ranges).}
 
 \item{parallel}{If a number greater than 1 is assigned, the function will run in parallel.}
-
-\item{parallel.type}{Could be specify one of: \cr
-\cr
-"mclapply" - Apply malapply to perform the run in parallel.\cr
-\cr
-"bplapply" - Apply bplapply to perfrom the run in parallel.}
 }
 \description{
 Input the data processed by `RegionAnnoFromData` and tally the occurrences for each condition 
