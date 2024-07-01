@@ -18,8 +18,7 @@ ObsExpObj(
   intersect = TRUE,
   condition = c("0-3000", "3000-10000", "10000-20000", "20000-30000", "30000-40000",
     "40000-50000"),
-  parallel = 1,
-  parallel.type = "mclapply"
+  parallel = 1
 )
 }
 \arguments{
