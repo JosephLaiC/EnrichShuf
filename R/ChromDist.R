@@ -497,12 +497,12 @@ ChromSTAT <- function(data, parallel=1) {
 #' @export
 CombineChrom <- function(data) {
 
-  random.n <- data[[1]]$expect
+  random.n <- length(data[[1]]$expect)
 
   result <- list(
     observe = {
       lapply(
-        tmp_obj, 
+        data, 
         function(x) {
           x$observe
         }
@@ -514,7 +514,7 @@ CombineChrom <- function(data) {
         function(n){
             
           lapply(
-            tmp_obj, 
+            data, 
             function(x) {
               x$expect[[n]]
             }
