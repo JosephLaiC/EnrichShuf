@@ -184,7 +184,7 @@ TargetFactorSTAT <- function(
       1:random.num, 
       function(x) {
         set.seed(x)
-        sampled_indices <- sample(total_idx, feature_len_num)
+        sampled_indices <- sample(total_idx, feature_len_num, replace = TRUE)
         total_dat[sampled_indices, sum(target)]
       }
     )
@@ -208,7 +208,7 @@ TargetFactorSTAT <- function(
         n, 
         function(x) {
           set.seed(x)
-          sampled_indices <- sample(total_idx, feature_len_num)
+          sampled_indices <- sample(total_idx, feature_len_num, replace = TRUE)
           total_dat[sampled_indices, sum(target)]
         }
       )
