@@ -108,9 +108,10 @@ FactorElementCorrelate <- function(
   }
   
   result <- table[, .SD[1], by = factor_name] %>%
+    dplyr::as_tibble() %>%
     select(factor_name, element_name, distance) %>%
-    setNames(c("name", "tag", "distance")) %>%
-    dplyr::as_tibble()
+    setNames(c("name", "tag", "distance"))
+    
   
   return(result)
   
