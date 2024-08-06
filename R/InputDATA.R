@@ -84,114 +84,35 @@ FactorElementCorrelate <- function(
     
   }
   
-  table <- valr::bed_closest(factor, element)[
-    ,c("factor_name.x", "element_name.y", ".dist", ".overlap")] %>% data.frame()
-  colnames(table) <- c("factor_name", "element_name", "distance", "overlap")
-  
-  intersect <- table[which(table$distance==0),] %>% 
-    { .[order(.$overlap, decreasing=TRUE),] }
-  
-  multi.overlap <- table(intersect$factor_name) %>% 
-    { .[which(.>1)] } %>% names()
-  
-  if (length(multi.overlap) > 0) {
+  if (!isTRUE(strand)) {
     
-    multi.info <- intersect %>%
-      dplyr::filter(factor_name %in% multi.overlap) %>%
-      ## Sort by factor_name -> overlap_length -> element_name
-      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
-      dplyr::group_by(factor_name) %>%
-      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
-    
-    intersect.info <- dplyr::bind_rows(
-      intersect[!intersect$factor_name %in% multi.overlap,], multi.info) 
+    result <- valr::bed_closest(factor, element) %>%
+      select(factor_name.x, element_name.y, .dist, .overlap) %>%
+      setNames(c("factor_name", "element_name", "distance", "overlap")) %>%
+      data.table::as.data.table() %>%
+      {
+        .[order(factor_name, -overlap, abs(distance), element_name)][, .SD[1], by = factor_name]
+      } %>%
+      select(factor_name, element_name, distance) %>%
+      setNames(c("name", "tag", "distance")) %>%
+      dplyr::as_tibble()
     
   } else {
     
-    intersect.info <- intersect
-    
-  }
-  
-  associate <- table[!table$factor_name %in% intersect.info$factor_name,]
-  multi.associate <- table(associate$factor_name) %>% 
-    { .[which(.>1)] } %>% names()
-  
-  if (length(multi.associate) > 0) {
-    
-    multi.info <- associate %>%
-      dplyr::filter(factor_name %in% multi.associate) %>%
-      ## Sort by factor_name -> overlap_length -> element_name
-      dplyr::arrange(factor_name, dplyr::desc(overlap), element_name) %>%
-      dplyr::group_by(factor_name) %>%
-      dplyr::summarize(dplyr::across(dplyr::everything(), dplyr::first), .groups = "drop")
-    
-    associate.info <- dplyr::bind_rows(
-      associate[!associate$factor_name %in% multi.associate,], multi.info) 
-    
-  } else {
-    
-    associate.info <- associate
-    
-  }
-  
-  result <- dplyr::bind_rows(intersect.info, associate.info)
-  
-  result$annotation <- NA
-  
-  if (isTRUE(strand)) {
-    
-    element <- data.frame(element)
-    
-    if (!all(unique(element$strand) %in% c("+", "-"))) {
-      stop("Check the element strand information")
-    }
-    
-    forward <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name %in% .,] }
-    reverse <- element[which(element$strand=="+"),"element_name"] %>%
-      { result[result$element_name %in% .,] }
-    
-    forward[which(forward$distance==0),"annotation"] <- "overlap"
-    forward[which(forward$distance <0),"annotation"] <- "upstream"
-    forward[which(forward$distance >0),"annotation"] <- "downstream"  
-    
-    reverse[which(reverse$distance==0),"annotation"] <- "overlap"
-    reverse[which(reverse$distance <0),"annotation"] <- "downstream"
-    reverse[which(reverse$distance >0),"annotation"] <- "upstream" 
-    
-    result <- dplyr::bind_rows(forward, reverse)
-    
-  } else {
-    
-    result[which(result$distance==0),"annotation"] <- "overlap"
-    result[which(result$distance <0),"annotation"] <- "upstream"
-    result[which(result$distance >0),"annotation"] <- "downstream" 
-    
-  }
-  
-  result <- result[,c("factor_name", "element_name", "annotation", "distance")]
-  result$distance <- abs(result$distance)
-  
-  
-  if (is.character(tag)) {
-    
-    colnames(result) <- c("name", paste(tag, c("name", "annotation", "distance"), sep="_")) 
-    
-  } else {
-    
-    colnames(result) <- c("name", "tag", "annotation", "distance")
-    
-  }
-  
-  if (!is.null(outloc)) {
-    
-    if (!is.character(outloc)) {
-      stop("Check the output location")
-    }
-    
-    write.table(
-      result, outloc, sep="\t", quote=FALSE, row.names=FALSE)
-    
+    result <- valr::bed_closest(factor, element) %>%
+      select(factor_name.x, element_name.y, .dist, .overlap, strand.y) %>%
+      setNames(c("factor_name", "element_name", "distance", "overlap", "strand")) %>%
+      data.table::as.data.table() %>%
+      {
+        .[, distance := fifelse(strand == "-", -distance, distance)]
+      } %>%
+      {
+        .[order(factor_name, -overlap, abs(distance), element_name)][, .SD[1], by = factor_name]
+      } %>%
+      select(factor_name, element_name, distance) %>%
+      setNames(c("name", "tag", "distance")) %>%
+      dplyr::as_tibble()
+      
   }
   
   return(result)
