@@ -166,33 +166,30 @@ TargetFactorSTAT <- function(
     stop("Please assign a character vector to element")
   }
 
-  if (!all(element%in%total)) {
-    message("Some elements are not in total... will remove them")
-    element <- element[element%in%total]
-  }
 
-
-  total_dat <- data.frame(
+  total_dat <- data.frame::data.table(
     total   = total,
-    feature = FALSE,
-    target  = FALSE)
-
-  total_dat[which(total_dat$total%in%factor),"feature"] <- TRUE
-  total_dat[which(total_dat$total%in%element),"target"] <- TRUE
+    feature = total %in% factor,
+    target  = total %in% element)
   
   ## Associate factor with element
-  observe.num <- sum(total_dat[which(total_dat$feature),"target"])
-  feature_len_num <- sum(total_dat$feature)
-  total_idx       <- 1:nrow(total_dat)
+  observe.num     <- total_dat[feature == TRUE, sum(target)]
+  feature_len_num <- total_dat[, sum(feature)]
+  total_idx       <- total_dat[, .I]  
 
   ## Randomly select elements from total
   if (parallel==1) {
-
-    expect.num <- sapply(1:random.num, function(x) 
-      { sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) })
-
-  } else if (parallel > 1) {
-
+    
+    expect.num <- sapply(
+      1:random.num, 
+      function(x) {
+        set.seed(x)
+        sampled_indices <- sample(total_idx, feature_len_num)
+        total_dat[sampled_indices, sum(target)]
+      }
+    )
+    
+  } else {
 
     gc(verbose = FALSE)
     doParallel::registerDoParallel(parallel)
@@ -201,18 +198,25 @@ TargetFactorSTAT <- function(
     } else {
       split_n <- split(1:random.num, cut(1:random.num, parallel))
     }
-    
-    expect.num <- foreach(n = split_n, .combine=c) %dopar% {
-      sapply(n, function(x) { 
-        sum(total_dat[randomFactor(total_idx, seed=x, n=feature_len_num),"target"]) 
-      })
+
+    expect.num <- foreach(
+      n = split_n, 
+      .combine = c
+    ) %dopar% {
+
+      sapply(
+        n, 
+        function(x) {
+          set.seed(x)
+          sampled_indices <- sample(total_idx, feature_len_num)
+          total_dat[sampled_indices, sum(target)]
+        }
+      )
+
     }
     doParallel::stopImplicitCluster()
 
-  } else {
-    stop("Please assign the number over 1 of cores to run the process")
   }
-
 
   mean <- mean(expect.num)
   sd   <- sd(expect.num)
@@ -224,9 +228,9 @@ TargetFactorSTAT <- function(
     log2FC       = log2(observe.num/mean),
     z_score      = (observe.num-mean)/sd,
     upper_pval   = pnorm(
-      observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=FALSE, log.p=log.p),
+      observe.num, mean=mean, sd=sd, lower.tail=FALSE, log.p=log.p),
     lower_pval   = pnorm(
-      observe.num, mean=mean(expect.num), sd=sd(expect.num), lower.tail=TRUE , log.p=log.p))
+      observe.num, mean=mean, sd=sd, lower.tail=TRUE , log.p=log.p))
 
   return(result)
 }
