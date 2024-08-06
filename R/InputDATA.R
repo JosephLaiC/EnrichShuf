@@ -89,9 +89,9 @@ FactorElementCorrelate <- function(
     table <- valr::bed_closest(factor, element) %>%
       select(factor_name.x, element_name.y, .dist, .overlap) %>%
       setNames(c("factor_name", "element_name", "distance", "overlap")) %>%
-      mutate(abs_distance = abs(distance)) %>%
-      data.table::as.data.table()
+      mutate(abs_distance = abs(distance))
     
+    data.table::setDT(table)
     data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
     
   } else {
@@ -99,20 +99,15 @@ FactorElementCorrelate <- function(
     table <- valr::bed_closest(factor, element) %>%
       select(factor_name.x, element_name.y, .dist, .overlap, strand.y) %>%
       setNames(c("factor_name", "element_name", "distance", "overlap", "strand")) %>%
-      mutate(abs_distance = abs(distance)) %>%
-      data.table::as.data.table()
+      mutate(abs_distance = abs(distance))
     
+    data.table::setDT(table)
     table[, distance := data.table::fifelse(strand == "-", -distance, distance)]
     data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
     
   }
   
-  result <- table %>%
-    dplyr::group_by(factor_name) %>%
-    dplyr::slice(1) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(factor_name, element_name, distance) %>%
-    setNames(c("name", "tag", "distance"))
+  result <- table[, .SD[1], by = factor_name]
     
   return(result)
   
