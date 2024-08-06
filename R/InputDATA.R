@@ -114,7 +114,7 @@ FactorElementCorrelate <- function(
   #   setNames(c("name", "tag", "distance"))
     
   
-  return(table)
+  return(result)
   
 }
 
