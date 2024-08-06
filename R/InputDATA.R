@@ -91,7 +91,7 @@ FactorElementCorrelate <- function(
       setNames(c("factor_name", "element_name", "distance", "overlap")) %>%
       data.table::as.data.table() %>%
       {
-        .[order(factor_name, -overlap, abs(distance), element_name)][, .SD[1], by = factor_name]
+        .[order(.SD[["factor_name"]], -.SD[["overlap"]], abs(.SD[["distance"]]), .SD[["element_name"]])][, .SD[1], by = factor_name]
       } %>%
       select(factor_name, element_name, distance) %>%
       setNames(c("name", "tag", "distance")) %>%
@@ -107,7 +107,7 @@ FactorElementCorrelate <- function(
         .[, distance := fifelse(strand == "-", -distance, distance)]
       } %>%
       {
-        .[order(factor_name, -overlap, abs(distance), element_name)][, .SD[1], by = factor_name]
+        .[order(.SD[["factor_name"]], -.SD[["overlap"]], abs(.SD[["distance"]]), .SD[["element_name"]])][, .SD[1], by = factor_name]
       } %>%
       select(factor_name, element_name, distance) %>%
       setNames(c("name", "tag", "distance")) %>%
