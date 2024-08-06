@@ -167,7 +167,7 @@ TargetFactorSTAT <- function(
   }
 
 
-  total_dat <- data.frame::data.table(
+  total_dat <- data.table::data.table(
     total   = total,
     feature = total %in% factor,
     target  = total %in% element)
