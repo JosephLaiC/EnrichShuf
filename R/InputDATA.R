@@ -104,10 +104,12 @@ FactorElementCorrelate <- function(
     
     table[, distance := data.table::fifelse(strand == "-", -distance, distance)]
     data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
+    table[, .SD[1], by = factor_name]
     
   }
   
-  result <- table[, .SD[1], by = factor_name] %>%
+  result <- table[, .SD[1], by = factor_name]
+  result <- result %>%
     dplyr::as_tibble() %>%
     select(factor_name, element_name, distance) %>%
     setNames(c("name", "tag", "distance"))
