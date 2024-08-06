@@ -107,7 +107,7 @@ FactorElementCorrelate <- function(
     
   }
   
-  result <- table[, .SD[1], by = factor_name]
+  result <- table[, .(element_name = element_name[1], distance = distance[1], overlap = overlap[1]), by = factor_name]
   # result <- result %>%
   #   dplyr::as_tibble() %>%
   #   select(factor_name, element_name, distance) %>%
