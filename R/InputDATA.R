@@ -86,34 +86,31 @@ FactorElementCorrelate <- function(
   
   if (!isTRUE(strand)) {
     
-    result <- valr::bed_closest(factor, element) %>%
+    table <- valr::bed_closest(factor, element) %>%
       select(factor_name.x, element_name.y, .dist, .overlap) %>%
       setNames(c("factor_name", "element_name", "distance", "overlap")) %>%
-      data.table::as.data.table() %>%
-      {
-        .[order(.SD[["factor_name"]], -.SD[["overlap"]], abs(.SD[["distance"]]), .SD[["element_name"]])][, .SD[1], by = factor_name]
-      } %>%
-      select(factor_name, element_name, distance) %>%
-      setNames(c("name", "tag", "distance")) %>%
-      dplyr::as_tibble()
+      mutate(abs_distance = abs(distance)) %>%
+      data.table::as.data.table()
+    
+    data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
     
   } else {
     
-    result <- valr::bed_closest(factor, element) %>%
+    table <- valr::bed_closest(factor, element) %>%
       select(factor_name.x, element_name.y, .dist, .overlap, strand.y) %>%
       setNames(c("factor_name", "element_name", "distance", "overlap", "strand")) %>%
-      data.table::as.data.table() %>%
-      {
-        .[, distance := fifelse(strand == "-", -distance, distance)]
-      } %>%
-      {
-        .[order(.SD[["factor_name"]], -.SD[["overlap"]], abs(.SD[["distance"]]), .SD[["element_name"]])][, .SD[1], by = factor_name]
-      } %>%
-      select(factor_name, element_name, distance) %>%
-      setNames(c("name", "tag", "distance")) %>%
-      dplyr::as_tibble()
-      
+      mutate(abs_distance = abs(distance)) %>%
+      data.table::as.data.table()
+    
+    table[, distance := data.table::fifelse(strand == "-", -distance, distance)]
+    data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
+    
   }
+  
+  result <- table[, .SD[1], by = factor_name] %>%
+    select(factor_name, element_name, distance) %>%
+    setNames(c("name", "tag", "distance")) %>%
+    dplyr::as_tibble()
   
   return(result)
   
