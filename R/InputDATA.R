@@ -21,7 +21,7 @@ FactorElementCorrelate <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -46,11 +46,11 @@ FactorElementCorrelate <- function(
     
     if (isTRUE(strand)) {
       
-      element <- valr::read_bed(element, n_fields=6)[,1:6]
+      element <- valr::read_bed(element)[,1:6]
       
     } else {
       
-      element <- valr::read_bed(element, n_fields=4)[,1:4]
+      element <- valr::read_bed(element)[,1:4]
       
     }
     
@@ -224,7 +224,7 @@ FactorShufCorrelate <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -258,13 +258,13 @@ FactorShufCorrelate <- function(
 
   # Check incl and excl
   if (is.character(incl)) {
-    incl <- valr::read_bed(incl, n_fields=3)
+    incl <- valr::read_bed(incl)[,1:3]
   } else if (is.data.frame(incl)) {
     incl <- incl[,1:3]
   }
   
   if (is.character(excl)) {
-    excl <- valr::read_bed(excl, n_fields=3)
+    excl <- valr::read_bed(excl)[,1:3]
   } else if (is.data.frame(excl)) {
     excl <- excl[,1:3]
   }
@@ -470,7 +470,7 @@ ObsExpObj <- function(
       stop("Check the factor file exsist in path")
     }
     
-    factor <- valr::read_bed(factor, n_fields=4)[,1:4] 
+    factor <- valr::read_bed(factor)[,1:4] 
     
   } else if (is.data.frame(factor)) {
     
@@ -495,11 +495,11 @@ ObsExpObj <- function(
     
     if (isTRUE(strand)) {
       
-      element <- valr::read_bed(element, n_fields=6)[,1:6]
+      element <- valr::read_bed(element)[,1:6]
       
     } else {
       
-      element <- valr::read_bed(element, n_fields=4)[,1:4]
+      element <- valr::read_bed(element)[,1:4]
       
     }
     
@@ -556,13 +556,13 @@ ObsExpObj <- function(
 
   # Check incl and excl
   if (is.character(incl)) {
-    incl <- valr::read_bed(incl, n_fields=3)
+    incl <- valr::read_bed(incl)[,1:3]
   } else if (is.data.frame(incl)) {
     incl <- incl[,1:3]
   }
   
   if (is.character(excl)) {
-    excl <- valr::read_bed(excl, n_fields=3)
+    excl <- valr::read_bed(excl)[,1:3]
   } else if (is.data.frame(excl)) {
     excl <- excl[,1:3]
   }
