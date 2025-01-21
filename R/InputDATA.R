@@ -92,7 +92,7 @@ FactorElementCorrelate <- function(
       mutate(abs_distance = abs(distance))
     
     data.table::setDT(table)
-    data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
+    
     
   } else {
     
@@ -103,10 +103,11 @@ FactorElementCorrelate <- function(
     
     data.table::setDT(table)
     table[, distance := data.table::fifelse(strand == "-", -distance, distance)]
-    data.table::setorder(table, factor_name, -overlap, abs_distance, element_name)
     
   }
   
+  data.table::setorder(table, factor_name, -overlap, abs_distance, element_name) 
+
   result <- table[, .SD[1], by = factor_name] %>%
     as_tibble() %>%
     select(factor_name, element_name, distance) %>%
@@ -231,6 +232,7 @@ FactorShufCorrelate <- function(
 #' @param condition A list of two numbers separated by a hyphen ("-"). Input the annotated data and tally the 
 #' occurrences for each condition (e.g., intersections or specific distance ranges).
 #' 
+#' @import readr 
 #' @export
 CountCorrelation <- function(
     data, intersect=TRUE,
