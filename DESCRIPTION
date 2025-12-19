@@ -20,4 +20,5 @@ Imports:
   BiocParallel,
   foreach,
   doParallel,
-  ggplot2
+  ggplot2,
+  rlang

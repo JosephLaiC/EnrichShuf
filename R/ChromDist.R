@@ -355,7 +355,7 @@ ObsExpObjEachChrom <- function(
 
 
   if (is.null(chrom_list)) {
-    chrom_list <- pull(genome, chrom)
+    chrom_list <- dplyr::pull(genome, chrom)
   }
 
   if (is.null(incl)) {

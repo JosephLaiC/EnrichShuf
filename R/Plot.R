@@ -265,16 +265,16 @@ ObsExpCurvePlot <- function(
     
     data.frame(
       distance = distance_num,
-      log2FC   = pull(dataList[[x]], log2FC),
+      log2FC   = dplyr::pull(dataList[[x]], log2FC),
       type     = x)
   
   }) %>% Reduce(rbind, .)
 
-  plot_dat <- ggplot(
-    data = data_tbl, aes(x = distance, y = log2FC, color = type)
+  plot_dat <- ggplot2::ggplot(
+    data = data_tbl, ggplot2::aes(x = distance, y = log2FC, color = type)
   ) + 
-    geom_line(linewidth = line.width) +
-    geom_hline(
+    ggplot2::geom_line(size = line.width) +
+    ggplot2::geom_hline(
       yintercept = hline, linetype = hline.type, color = hline.color
     )
   
@@ -284,11 +284,11 @@ ObsExpCurvePlot <- function(
       stop("The length of the color vector is not the same as the number of conditions.")
     }
 
-    plot_dat <- plot_dat + scale_color_manual(values = setNames(color, names(dataList)))
+    plot_dat <- plot_dat + ggplot2::scale_color_manual(values = setNames(color, names(dataList)))
 
   }
 
-  plot_dat <- plot_dat + labs(x = xlab, y = ylab)
+  plot_dat <- plot_dat + ggplot2::labs(x = xlab, y = ylab)
   
   print(plot_dat)
 
