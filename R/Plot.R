@@ -273,7 +273,7 @@ ObsExpCurvePlot <- function(
   plot_dat <- ggplot2::ggplot(
     data = data_tbl, ggplot2::aes(x = distance, y = log2FC, color = type)
   ) + 
-    ggplot2::geom_line(size = line.width) +
+    ggplot2::geom_line(linewidth = line.width) +
     ggplot2::geom_hline(
       yintercept = hline, linetype = hline.type, color = hline.color
     )
